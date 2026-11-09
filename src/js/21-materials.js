@@ -208,6 +208,8 @@ Object.assign(M, {
   gripperFinger: phys(0x3a3d40, 0.5, 0.08),
   controllerBlack: phys(0x1b1c1e, 0.5, 0.18),
   controllerYellow: fanucYellow,
+  // Photographed R-30iB Mate Plus face (quick-start and left view), not the yellow lower skins.
+  controllerFace: phys(0xe4dcc8, 0.62, 0.02),
   euroGrey: phys(0x8a8f94, 0.7, 0.12),
   lowerYellow: phys(0xF2C230, 0.6, 0.04),
   ledRing: phys(0x2a2a2a, 0.35, 0, { emissive: 0xffffff, emissiveIntensity: 0 }),

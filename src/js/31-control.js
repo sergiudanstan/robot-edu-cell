@@ -6,7 +6,7 @@ const cw = 0.370, cd = 0.350, ch = 0.200;
 const cz = cabShelf + ch / 2;
 rbox(cw, cd, ch, 0.004, M.controllerBlack, C.x, C.y, cz);
 const faceY = C.y - cd / 2;
-box(cw - 0.02, 0.008, ch - 0.02, M.controllerYellow, C.x, faceY - 0.004, cz);
+box(cw - 0.02, 0.008, ch - 0.02, M.controllerFace, C.x, faceY - 0.004, cz);
 const fan = mesh(new THREE.CylinderGeometry(0.058, 0.058, 0.006, 28), M.controllerBlack);
 fan.position.set(C.x - 0.07, faceY - 0.009, cz + 0.01);
 const fanRing = mesh(new THREE.TorusGeometry(0.046, 0.004, 8, 24), M.zinc9006);
