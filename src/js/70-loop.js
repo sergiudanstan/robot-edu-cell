@@ -40,9 +40,16 @@ function update(dt) {
       else { time = DURATION; setPlaying(false); }
     }
   }
-  const pose = robotPose(time);
-  setRobot(pose.q, pose.grip);
-  placeParts(time);
+  let pose;
+  if (mode === "manual" && jogQ) {
+    pose = { q: jogQ, grip: jogGrip, seg: { line: 0, cmd: "JOG", label: "JOG" }, tcp: tcpFor(jogQ) };
+    setRobot(pose.q, pose.grip);
+  } else {
+    pose = robotPose(time);
+    setRobot(pose.q, pose.grip);
+    placeParts(time);
+  }
+  if (typeof refreshUI === "function") refreshUI(time, pose);
   const vis = (segs.vision || []).find((s) => time >= s.t0 && time < s.t1 + 1e-9);
   if (typeof setLed === "function") setLed(!!(vis && vis.snap));
   const head = $("playhead");
