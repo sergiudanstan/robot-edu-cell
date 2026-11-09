@@ -1,7 +1,10 @@
 // Cell dimensions. Values marked [E] are estimated from photos (PLAN §3). Do not change them silently.
 const LAYOUT = {
   floor: -0.85,                                   // [E] worktop 0.85 m above the floor
-  frame: { x: 1.10, y: 0.75, top: 1.00, prof: 0.040 },  // [E] outer 1100 x 750; roof rails at z = 1.00
+  // [E] Outer was 1100 × 750. Depth is 940 mm, shifted back (cy), because HOME
+  // (J2 = J3 = 0) puts the wrist centre at cell y = 0.41. A 750 mm cell cannot
+  // keep 25 mm behind that forearm. Outer y runs −0.38 … 0.56. Back inner panel y = 0.52.
+  frame: { x: 1.10, y: 0.94, top: 1.00, prof: 0.040, cy: 0.09 },
   shelf: { z: -0.55 },                            // lower shelf (aluminium slats) [E]
   castor: { d: 0.075, h: 0.10 }, foot: { d: 0.050 },
   worktop: { t: 0.015, slot: 0.040 },             // slotted aluminium plate, T-slots every 40 mm along x

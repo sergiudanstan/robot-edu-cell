@@ -3,9 +3,9 @@
 function cellToScene(x, y, z) { return V(x, z, -y); }
 
 const views = {
-  iso: { pos: cellToScene(1.35, -1.55, 1.05), target: cellToScene(0.0, 0.0, 0.35) },
-  front: { pos: cellToScene(0.0, -1.85, 0.55), target: cellToScene(0.0, 0.0, 0.40) },
-  side: { pos: cellToScene(-1.85, 0.05, 0.55), target: cellToScene(0.0, 0.0, 0.40) },
+  iso: { pos: cellToScene(1.55, -1.90, 0.95), target: cellToScene(0.0, 0.0, 0.08) },
+  front: { pos: cellToScene(0.0, -2.15, 0.20), target: cellToScene(0.0, 0.0, 0.12) },
+  side: { pos: cellToScene(-2.15, 0.02, 0.22), target: cellToScene(0.0, 0.0, 0.12) },
   top: { pos: cellToScene(0.0, -0.02, 2.35), target: cellToScene(0.0, 0.0, 0.0) },
   robot: { pos: cellToScene(0.85, -0.55, 0.72), target: cellToScene(0.20, 0.12, 0.40) },
   board: { pos: cellToScene(-0.55, -0.72, 0.55), target: cellToScene(-0.10, -0.08, 0.04) },

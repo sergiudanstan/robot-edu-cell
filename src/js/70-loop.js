@@ -43,6 +43,8 @@ function update(dt) {
   const pose = robotPose(time);
   setRobot(pose.q, pose.grip);
   placeParts(time);
+  const vis = (segs.vision || []).find((s) => time >= s.t0 && time < s.t1 + 1e-9);
+  if (typeof setLed === "function") setLed(!!(vis && vis.snap));
   const head = $("playhead");
   if (head) head.style.left = (100 * time / DURATION) + "%";
   const now = $("clock-now");

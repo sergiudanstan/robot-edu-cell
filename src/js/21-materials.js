@@ -195,4 +195,21 @@ const BLOOM_MAT = {
 function applyFloorTheme() {
   M.floor.color.set(floorIsDark() ? 0x2a2b2c : 0xb9bcbd);
 }
+
+// FANUC cell. controllerYellow is the open-air cabinet's front cover.
+const fanucYellow = phys(0xF5C221, 0.38, 0.04, { clearcoat: 0.4, clearcoatRoughness: 0.22 });
+Object.assign(M, {
+  fanucYellow,
+  fanucBlack: phys(0x161717, 0.5, 0.12),
+  fanucFlange: phys(0x262626, 0.45, 0.2),
+  nylonBlack: phys(0x1a1a1a, 0.55, 0),
+  nylonWhite: phys(0xf4f4f0, 0.45, 0),
+  gripperBody: phys(0xd9dbdc, 0.45, 0.04),
+  gripperFinger: phys(0x3a3d40, 0.5, 0.08),
+  controllerBlack: phys(0x1b1c1e, 0.5, 0.18),
+  controllerYellow: fanucYellow,
+  euroGrey: phys(0x8a8f94, 0.7, 0.12),
+  lowerYellow: phys(0xF2C230, 0.6, 0.04),
+  ledRing: phys(0x2a2a2a, 0.35, 0, { emissive: 0xffffff, emissiveIntensity: 0 }),
+});
 window.addEventListener("themechange", applyFloorTheme);
