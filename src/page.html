@@ -1,0 +1,167 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>FANUC Educational Cell</title>
+<meta name="description" content="FANUC Educational Cell: an LR Mate 200iD/4S moves ten nylon cylinders across a Solitaire board inside a silver training cell, with the TP program, I/O and iRVision in the browser.">
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f3f4f5; --panel: #ffffff; --panel-2: #eceef0; --ink: #1a1c1e; --muted: #5c636a; --faint: #8b9298;
+    --line: #d5dadd; --accent: #1a1c1e; --accent-soft: #fff4cc; --mark: #F5C221;
+    --lane-robot: #e2b31a; --lane-grip: #3a3d40; --lane-vision: #1f8a84; --lane-io: #8a8f94;
+    --bad: #c8312b; --bad-soft: #fbe5e3; --good: #2a8a3e;
+    --scene-top: #f7f8f8; --scene-bottom: #d9dde0;
+    --shadow: 0 1px 2px rgba(20,22,24,0.08), 0 2px 8px rgba(20,22,24,0.05);
+    --display: "Barlow Semi Condensed", "Arial Narrow", system-ui, sans-serif;
+    --ui: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+    --mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #121314; --panel: #1b1d1f; --panel-2: #242628; --ink: #eceeee; --muted: #b4b8bc; --faint: #8b9196;
+      --line: #34383c; --accent: #f2f3f4; --accent-soft: #3a3420; --mark: #F5C221;
+      --lane-robot: #f0cc4a; --lane-grip: #c5c8cc; --lane-vision: #5dcec6; --lane-io: #9aa0a6;
+      --bad: #ff7b72; --bad-soft: #43201e; --good: #6fd286;
+      --scene-top: #2a2d30; --scene-bottom: #101112;
+      --shadow: 0 1px 2px rgba(0,0,0,0.45), 0 2px 8px rgba(0,0,0,0.3);
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #121314; --panel: #1b1d1f; --panel-2: #242628; --ink: #eceeee; --muted: #b4b8bc; --faint: #8b9196;
+    --line: #34383c; --accent: #f2f3f4; --accent-soft: #3a3420; --mark: #F5C221;
+    --lane-robot: #f0cc4a; --lane-grip: #c5c8cc; --lane-vision: #5dcec6; --lane-io: #9aa0a6;
+    --bad: #ff7b72; --bad-soft: #43201e; --good: #6fd286;
+    --scene-top: #2a2d30; --scene-bottom: #101112;
+    --shadow: 0 1px 2px rgba(0,0,0,0.45), 0 2px 8px rgba(0,0,0,0.3);
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0; display: flex; flex-direction: column; overflow: hidden;
+    background: var(--bg); color: var(--ink); font: 400 14px/1.45 var(--ui);
+    -webkit-font-smoothing: antialiased;
+  }
+  button, select, input { font: inherit; color: inherit; }
+  :focus-visible { outline: 2px solid var(--mark); outline-offset: 2px; }
+  .mono { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+  header {
+    flex: none; display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+    padding: 8px 16px; border-bottom: 1px solid var(--line); background: var(--panel);
+  }
+  .mark { flex: none; width: 40px; height: 40px; border-radius: 8px; background: var(--mark); display: grid; place-items: center; color: #1a1c1e; font: 700 13px var(--display); letter-spacing: 0.02em; }
+  .title { min-width: 0; line-height: 1.1; }
+  .title small { display: block; font: 600 11px var(--ui); letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+  .title h1 { margin: 0; font: 700 22px var(--display); letter-spacing: 0.01em; }
+  .mode-switch { margin-left: auto; display: flex; gap: 2px; padding: 3px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel-2); }
+  .mode-switch button { border: 0; background: none; cursor: pointer; padding: 6px 16px; border-radius: 7px; font-size: 13px; font-weight: 600; color: var(--muted); }
+  .mode-switch button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+  .app { position: relative; flex: 1; min-height: 0; display: flex; }
+  .rail { flex: none; width: 76px; display: flex; flex-direction: column; gap: 2px; padding: 8px 6px; border-right: 1px solid var(--line); background: var(--panel); overflow-y: auto; }
+  .rail-item { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 2px; border: 0; border-radius: 10px; background: none; cursor: pointer; color: var(--muted); font-size: 10.5px; font-weight: 500; }
+  .rail-item:hover { background: var(--panel-2); color: var(--ink); }
+  .rail-item[aria-pressed="true"] { background: var(--accent-soft); color: var(--ink); font-weight: 600; }
+  .drawer { flex: none; width: 360px; display: flex; flex-direction: column; gap: 10px; padding: 10px; overflow-y: auto; border-right: 1px solid var(--line); background: var(--panel-2); }
+  .drawer[hidden] { display: none; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; box-shadow: var(--shadow); }
+  .card[hidden] { display: none; }
+  .card h2 { margin: 0 0 8px; font: 600 12px var(--display); letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+  .card p { margin: 0; color: var(--muted); font-size: 13px; }
+  .stage { flex: 1; min-width: 0; display: flex; flex-direction: column; background: var(--panel); }
+  .viewport { position: relative; flex: 1; min-height: 0; }
+  .viewport canvas.main { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+  .overlay { position: absolute; }
+  .glass { background: color-mix(in srgb, var(--panel) 88%, transparent); backdrop-filter: blur(8px); border: 1px solid var(--line); border-radius: 11px; }
+  .toolbar { top: 12px; right: 12px; display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+  .views { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 2px; padding: 4px; max-width: 420px; }
+  .views button { border: 0; background: none; cursor: pointer; padding: 5px 9px; border-radius: 7px; font-size: 12px; font-weight: 500; color: var(--muted); }
+  .views button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+  .transport { flex: none; display: flex; align-items: center; gap: 12px; padding: 8px 14px; border-top: 1px solid var(--line); background: var(--panel-2); }
+  .play { flex: none; width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; border: 0; background: var(--ink); color: var(--bg); cursor: pointer; }
+  .play svg { width: 18px; height: 18px; }
+  .timeline { flex: 1; min-width: 0; position: relative; height: 54px; cursor: pointer; touch-action: none; }
+  .timeline canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .playhead { position: absolute; top: 0; bottom: 0; width: 2px; margin-left: -1px; background: var(--mark); pointer-events: none; }
+  .clock { flex: none; font-size: 13px; color: var(--muted); min-width: 96px; text-align: right; }
+  .clock b { color: var(--ink); font-weight: 500; }
+  .chips { flex: none; display: flex; gap: 2px; padding: 3px; border: 1px solid var(--line); border-radius: 9px; background: var(--panel); }
+  .chips button { border: 0; background: none; cursor: pointer; padding: 4px 8px; border-radius: 6px; font-size: 12px; color: var(--muted); }
+  .chips button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+  .toggle { flex: none; display: inline-flex; align-items: center; gap: 5px; font-size: 12px; color: var(--muted); cursor: pointer; user-select: none; }
+  .toggle input { accent-color: var(--mark); margin: 0; }
+</style>
+</head>
+<body>
+<header>
+  <div class="mark" aria-hidden="true">F</div>
+  <div class="title">
+    <small>Educational cell</small>
+    <h1>FANUC Educational Cell · LR Mate 200iD/4S</h1>
+  </div>
+  <div class="mode-switch" role="group" aria-label="Mode">
+    <button type="button" data-mode="program" aria-pressed="true">Program</button>
+    <button type="button" data-mode="manual" aria-pressed="false">Manual</button>
+  </div>
+</header>
+<div class="app">
+  <nav class="rail" aria-label="Panels">
+    <button type="button" class="rail-item" data-panel="live" aria-pressed="false">Live</button>
+    <button type="button" class="rail-item" data-panel="program" aria-pressed="false">Program</button>
+    <button type="button" class="rail-item" data-panel="io" aria-pressed="false">I/O</button>
+    <button type="button" class="rail-item" data-panel="joints" aria-pressed="false">Joints</button>
+    <button type="button" class="rail-item" data-panel="tcp" aria-pressed="false">TCP</button>
+    <button type="button" class="rail-item" data-panel="report" aria-pressed="false">Report</button>
+    <button type="button" class="rail-item" data-panel="jog" aria-pressed="false">Jog</button>
+  </nav>
+  <aside class="drawer" id="drawer" hidden>
+    <section class="card" data-panel="live" hidden><h2>Live</h2><p id="live-body">Cycle state fills in with the program.</p></section>
+    <section class="card" data-panel="program" hidden><h2>Program</h2><p>TP listing.</p></section>
+    <section class="card" data-panel="io" hidden><h2>I/O</h2><p>DI, DO, RI, RO.</p></section>
+    <section class="card" data-panel="joints" hidden><h2>Joints</h2><p>J1–J6.</p></section>
+    <section class="card" data-panel="tcp" hidden><h2>TCP</h2><p>UF0 and UF1.</p></section>
+    <section class="card" data-panel="report" hidden><h2>Report</h2><p>Cycle and clearance.</p></section>
+    <section class="card" data-panel="jog" hidden><h2>Jog</h2><p>Joint and cartesian jog.</p></section>
+  </aside>
+  <main class="stage">
+    <div class="viewport" id="viewport">
+      <div class="overlay toolbar">
+        <div class="views glass" role="group" aria-label="Views">
+          <button type="button" data-view="iso" aria-pressed="true">Iso</button>
+          <button type="button" data-view="front">Front</button>
+          <button type="button" data-view="side">Side</button>
+          <button type="button" data-view="top">Top</button>
+          <button type="button" data-view="robot">Robot</button>
+          <button type="button" data-view="board">Board</button>
+          <button type="button" data-view="camera">Camera</button>
+        </div>
+      </div>
+    </div>
+    <div class="transport">
+      <button type="button" class="play" id="play" aria-label="Pause"><svg id="play-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M7 4.5h3.5v15H7zM13.5 4.5H17v15h-3.5z"/></svg></button>
+      <div class="timeline" id="timeline" tabindex="0" role="slider" aria-valuemin="0" aria-valuemax="100">
+        <canvas id="lanes"></canvas>
+        <div class="playhead" id="playhead"></div>
+      </div>
+      <div class="clock mono"><b id="clock-now">0.0</b> / <span id="clock-end">0.0</span> s</div>
+      <div class="chips" role="group" aria-label="Speed">
+        <button type="button" data-speed="0.5">0.5×</button>
+        <button type="button" data-speed="1" aria-pressed="true">1×</button>
+        <button type="button" data-speed="2">2×</button>
+      </div>
+      <label class="toggle"><input type="checkbox" id="loop" checked> Loop</label>
+      <label class="toggle"><input type="checkbox" id="trail" checked> Path</label>
+      <label class="toggle"><input type="checkbox" id="guards" checked> Guards</label>
+      <label class="toggle"><input type="checkbox" id="hq" checked> HQ</label>
+    </div>
+  </main>
+</div>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.186.1/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.186.1/examples/jsm/"
+} }
+</script>
+<!-- @@MODULE -->
+</body></html>

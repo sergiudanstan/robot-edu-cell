@@ -1,0 +1,7 @@
+*.mp4
+.DS_Store
+node_modules/
+_plan/
+_ref/
+_cad/
+*.tmp

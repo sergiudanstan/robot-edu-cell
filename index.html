@@ -1,0 +1,1069 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>FANUC Educational Cell</title>
+<meta name="description" content="FANUC Educational Cell: an LR Mate 200iD/4S moves ten nylon cylinders across a Solitaire board inside a silver training cell, with the TP program, I/O and iRVision in the browser.">
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f3f4f5; --panel: #ffffff; --panel-2: #eceef0; --ink: #1a1c1e; --muted: #5c636a; --faint: #8b9298;
+    --line: #d5dadd; --accent: #1a1c1e; --accent-soft: #fff4cc; --mark: #F5C221;
+    --lane-robot: #e2b31a; --lane-grip: #3a3d40; --lane-vision: #1f8a84; --lane-io: #8a8f94;
+    --bad: #c8312b; --bad-soft: #fbe5e3; --good: #2a8a3e;
+    --scene-top: #f7f8f8; --scene-bottom: #d9dde0;
+    --shadow: 0 1px 2px rgba(20,22,24,0.08), 0 2px 8px rgba(20,22,24,0.05);
+    --display: "Barlow Semi Condensed", "Arial Narrow", system-ui, sans-serif;
+    --ui: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+    --mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #121314; --panel: #1b1d1f; --panel-2: #242628; --ink: #eceeee; --muted: #b4b8bc; --faint: #8b9196;
+      --line: #34383c; --accent: #f2f3f4; --accent-soft: #3a3420; --mark: #F5C221;
+      --lane-robot: #f0cc4a; --lane-grip: #c5c8cc; --lane-vision: #5dcec6; --lane-io: #9aa0a6;
+      --bad: #ff7b72; --bad-soft: #43201e; --good: #6fd286;
+      --scene-top: #2a2d30; --scene-bottom: #101112;
+      --shadow: 0 1px 2px rgba(0,0,0,0.45), 0 2px 8px rgba(0,0,0,0.3);
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #121314; --panel: #1b1d1f; --panel-2: #242628; --ink: #eceeee; --muted: #b4b8bc; --faint: #8b9196;
+    --line: #34383c; --accent: #f2f3f4; --accent-soft: #3a3420; --mark: #F5C221;
+    --lane-robot: #f0cc4a; --lane-grip: #c5c8cc; --lane-vision: #5dcec6; --lane-io: #9aa0a6;
+    --bad: #ff7b72; --bad-soft: #43201e; --good: #6fd286;
+    --scene-top: #2a2d30; --scene-bottom: #101112;
+    --shadow: 0 1px 2px rgba(0,0,0,0.45), 0 2px 8px rgba(0,0,0,0.3);
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0; display: flex; flex-direction: column; overflow: hidden;
+    background: var(--bg); color: var(--ink); font: 400 14px/1.45 var(--ui);
+    -webkit-font-smoothing: antialiased;
+  }
+  button, select, input { font: inherit; color: inherit; }
+  :focus-visible { outline: 2px solid var(--mark); outline-offset: 2px; }
+  .mono { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+  header {
+    flex: none; display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+    padding: 8px 16px; border-bottom: 1px solid var(--line); background: var(--panel);
+  }
+  .mark { flex: none; width: 40px; height: 40px; border-radius: 8px; background: var(--mark); display: grid; place-items: center; color: #1a1c1e; font: 700 13px var(--display); letter-spacing: 0.02em; }
+  .title { min-width: 0; line-height: 1.1; }
+  .title small { display: block; font: 600 11px var(--ui); letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+  .title h1 { margin: 0; font: 700 22px var(--display); letter-spacing: 0.01em; }
+  .mode-switch { margin-left: auto; display: flex; gap: 2px; padding: 3px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel-2); }
+  .mode-switch button { border: 0; background: none; cursor: pointer; padding: 6px 16px; border-radius: 7px; font-size: 13px; font-weight: 600; color: var(--muted); }
+  .mode-switch button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+  .app { position: relative; flex: 1; min-height: 0; display: flex; }
+  .rail { flex: none; width: 76px; display: flex; flex-direction: column; gap: 2px; padding: 8px 6px; border-right: 1px solid var(--line); background: var(--panel); overflow-y: auto; }
+  .rail-item { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 2px; border: 0; border-radius: 10px; background: none; cursor: pointer; color: var(--muted); font-size: 10.5px; font-weight: 500; }
+  .rail-item:hover { background: var(--panel-2); color: var(--ink); }
+  .rail-item[aria-pressed="true"] { background: var(--accent-soft); color: var(--ink); font-weight: 600; }
+  .drawer { flex: none; width: 360px; display: flex; flex-direction: column; gap: 10px; padding: 10px; overflow-y: auto; border-right: 1px solid var(--line); background: var(--panel-2); }
+  .drawer[hidden] { display: none; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; box-shadow: var(--shadow); }
+  .card[hidden] { display: none; }
+  .card h2 { margin: 0 0 8px; font: 600 12px var(--display); letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+  .card p { margin: 0; color: var(--muted); font-size: 13px; }
+  .stage { flex: 1; min-width: 0; display: flex; flex-direction: column; background: var(--panel); }
+  .viewport { position: relative; flex: 1; min-height: 0; }
+  .viewport canvas.main { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+  .overlay { position: absolute; }
+  .glass { background: color-mix(in srgb, var(--panel) 88%, transparent); backdrop-filter: blur(8px); border: 1px solid var(--line); border-radius: 11px; }
+  .toolbar { top: 12px; right: 12px; display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+  .views { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 2px; padding: 4px; max-width: 420px; }
+  .views button { border: 0; background: none; cursor: pointer; padding: 5px 9px; border-radius: 7px; font-size: 12px; font-weight: 500; color: var(--muted); }
+  .views button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+  .transport { flex: none; display: flex; align-items: center; gap: 12px; padding: 8px 14px; border-top: 1px solid var(--line); background: var(--panel-2); }
+  .play { flex: none; width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; border: 0; background: var(--ink); color: var(--bg); cursor: pointer; }
+  .play svg { width: 18px; height: 18px; }
+  .timeline { flex: 1; min-width: 0; position: relative; height: 54px; cursor: pointer; touch-action: none; }
+  .timeline canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .playhead { position: absolute; top: 0; bottom: 0; width: 2px; margin-left: -1px; background: var(--mark); pointer-events: none; }
+  .clock { flex: none; font-size: 13px; color: var(--muted); min-width: 96px; text-align: right; }
+  .clock b { color: var(--ink); font-weight: 500; }
+  .chips { flex: none; display: flex; gap: 2px; padding: 3px; border: 1px solid var(--line); border-radius: 9px; background: var(--panel); }
+  .chips button { border: 0; background: none; cursor: pointer; padding: 4px 8px; border-radius: 6px; font-size: 12px; color: var(--muted); }
+  .chips button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+  .toggle { flex: none; display: inline-flex; align-items: center; gap: 5px; font-size: 12px; color: var(--muted); cursor: pointer; user-select: none; }
+  .toggle input { accent-color: var(--mark); margin: 0; }
+</style>
+</head>
+<body>
+<header>
+  <div class="mark" aria-hidden="true">F</div>
+  <div class="title">
+    <small>Educational cell</small>
+    <h1>FANUC Educational Cell · LR Mate 200iD/4S</h1>
+  </div>
+  <div class="mode-switch" role="group" aria-label="Mode">
+    <button type="button" data-mode="program" aria-pressed="true">Program</button>
+    <button type="button" data-mode="manual" aria-pressed="false">Manual</button>
+  </div>
+</header>
+<div class="app">
+  <nav class="rail" aria-label="Panels">
+    <button type="button" class="rail-item" data-panel="live" aria-pressed="false">Live</button>
+    <button type="button" class="rail-item" data-panel="program" aria-pressed="false">Program</button>
+    <button type="button" class="rail-item" data-panel="io" aria-pressed="false">I/O</button>
+    <button type="button" class="rail-item" data-panel="joints" aria-pressed="false">Joints</button>
+    <button type="button" class="rail-item" data-panel="tcp" aria-pressed="false">TCP</button>
+    <button type="button" class="rail-item" data-panel="report" aria-pressed="false">Report</button>
+    <button type="button" class="rail-item" data-panel="jog" aria-pressed="false">Jog</button>
+  </nav>
+  <aside class="drawer" id="drawer" hidden>
+    <section class="card" data-panel="live" hidden><h2>Live</h2><p id="live-body">Cycle state fills in with the program.</p></section>
+    <section class="card" data-panel="program" hidden><h2>Program</h2><p>TP listing.</p></section>
+    <section class="card" data-panel="io" hidden><h2>I/O</h2><p>DI, DO, RI, RO.</p></section>
+    <section class="card" data-panel="joints" hidden><h2>Joints</h2><p>J1–J6.</p></section>
+    <section class="card" data-panel="tcp" hidden><h2>TCP</h2><p>UF0 and UF1.</p></section>
+    <section class="card" data-panel="report" hidden><h2>Report</h2><p>Cycle and clearance.</p></section>
+    <section class="card" data-panel="jog" hidden><h2>Jog</h2><p>Joint and cartesian jog.</p></section>
+  </aside>
+  <main class="stage">
+    <div class="viewport" id="viewport">
+      <div class="overlay toolbar">
+        <div class="views glass" role="group" aria-label="Views">
+          <button type="button" data-view="iso" aria-pressed="true">Iso</button>
+          <button type="button" data-view="front">Front</button>
+          <button type="button" data-view="side">Side</button>
+          <button type="button" data-view="top">Top</button>
+          <button type="button" data-view="robot">Robot</button>
+          <button type="button" data-view="board">Board</button>
+          <button type="button" data-view="camera">Camera</button>
+        </div>
+      </div>
+    </div>
+    <div class="transport">
+      <button type="button" class="play" id="play" aria-label="Pause"><svg id="play-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M7 4.5h3.5v15H7zM13.5 4.5H17v15h-3.5z"/></svg></button>
+      <div class="timeline" id="timeline" tabindex="0" role="slider" aria-valuemin="0" aria-valuemax="100">
+        <canvas id="lanes"></canvas>
+        <div class="playhead" id="playhead"></div>
+      </div>
+      <div class="clock mono"><b id="clock-now">0.0</b> / <span id="clock-end">0.0</span> s</div>
+      <div class="chips" role="group" aria-label="Speed">
+        <button type="button" data-speed="0.5">0.5×</button>
+        <button type="button" data-speed="1" aria-pressed="true">1×</button>
+        <button type="button" data-speed="2">2×</button>
+      </div>
+      <label class="toggle"><input type="checkbox" id="loop" checked> Loop</label>
+      <label class="toggle"><input type="checkbox" id="trail" checked> Path</label>
+      <label class="toggle"><input type="checkbox" id="guards" checked> Guards</label>
+      <label class="toggle"><input type="checkbox" id="hq" checked> HQ</label>
+    </div>
+  </main>
+</div>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.186.1/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.186.1/examples/jsm/"
+} }
+</script>
+<script type="module">
+import * as THREE from "three";
+import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
+import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
+import { GTAOPass } from "three/addons/postprocessing/GTAOPass.js";
+import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
+import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
+import { RoundedBoxGeometry } from "three/addons/geometries/RoundedBoxGeometry.js";
+import * as BufferGeometryUtils from "three/addons/utils/BufferGeometryUtils.js";
+
+const $ = (id) => document.getElementById(id);
+const css = (n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const V = (x, y, z) => new THREE.Vector3(x, y, z);
+
+// @@logic-start — T0 stub. C1 replaces timing, the TP program, IK and collisions.
+// Keep BOARD, boardHoles() and HOLES: the Solitaire mesh reads them.
+// Board frame: origin at the board centre, +x right, +y back. UF1 origin is the front-left corner.
+// A is the left triangle (base outward), B the right triangle mirrored. Rows 4-3-2-1. [E]
+
+const BOARD = {
+  x: -0.10, y: -0.08,
+  w: 0.260, d: 0.160, h: 0.020, topZ: 0.020,
+  holeR: 0.0105, holeD: 0.012,
+  pitch: 0.034, row: 0.0294, tri: 0.065,
+  cylR: 0.010, cylH: 0.032, chamfer: 0.001,
+};
+
+function boardHoles() {
+  const rows = [4, 3, 2, 1];
+  const holes = [];
+  const count = { A: 0, B: 0 };
+  for (const sign of [-1, 1]) {
+    const side = sign < 0 ? "A" : "B";
+    const cx = sign * BOARD.tri;
+    rows.forEach((n, r) => {
+      const x = cx - sign * (r - 1.5) * BOARD.row;
+      for (let c = 0; c < n; c++) {
+        const y = (c - (n - 1) / 2) * BOARD.pitch;
+        count[side] += 1;
+        holes.push({
+          id: side + count[side], side, i: count[side], row: r, col: c,
+          lx: x, ly: y,
+          x: BOARD.x + x, y: BOARD.y + y, z: BOARD.topZ,
+          ux: x + BOARD.w / 2, uy: y + BOARD.d / 2,
+          cz: BOARD.topZ - BOARD.holeD / 2 + BOARD.cylH / 2,
+        });
+      }
+    });
+  }
+  return holes;
+}
+
+const HOLES = boardHoles();
+const DURATION = 4;
+const segs = {
+  robot: [{ t0: 0, t1: DURATION, label: "HOME", cmd: "J PR[1:HOME] 100% FINE", line: 6 }],
+  gripper: [{ t0: 0, t1: DURATION, label: "OPEN", cmd: "CALL GRIP_OPEN", line: 7 }],
+  vision: [{ t0: 0, t1: DURATION, label: "IDLE", cmd: "", line: 0 }],
+  io: [{ t0: 0, t1: DURATION, label: "DOOR_OK", cmd: "DI[1:DOOR_OK]=ON", line: 5 }],
+};
+const TP = [
+  "1:  UFRAME_NUM=1 ;",
+  "2:  UTOOL_NUM=1 ;",
+  "3:  PAYLOAD[1] ;",
+  "4:  DO[11:BUSY]=ON ;",
+  "5:  WAIT DI[1:DOOR_OK]=ON ;",
+  "6:J PR[1:HOME] 100% FINE ;",
+];
+const parts = HOLES.filter((h) => h.side === "A").map((h) => ({
+  id: h.id, from: h.id, to: "B" + h.i,
+  track: [{ t: 0, p: [h.x, h.y, h.cz] }, { t: DURATION, p: [h.x, h.y, h.cz] }],
+}));
+const S = { t: [0], q: [[0, 0, 0, 0, -90, 0]], tcp: [[0.2, 0.3, 0.4]] };
+const minClear = { m: 0.051, at: 0 };
+
+function robotPose(t) {
+  return { q: [0, 0, 0, 0, -90, 0], grip: 0, seg: segs.robot[0], tcp: [0.2, 0.3, 0.4], t };
+}
+function ioAt() {
+  return {
+    DI: { "1:DOOR_OK": 1 },
+    DO: { "11:BUSY": 0, "12:CYCLE_DONE": 0 },
+    RI: { "1:CLOSED": 0, "2:OPENED": 1 },
+    RO: { "1:CLOSE": 0, "2:OPEN": 1 },
+  };
+}
+function lineAt() { return 6; }
+function fk(q) {
+  return { R: [[0, 0, 1], [0, -1, 0], [1, 0, 0]], p: [360, 0, 280], q };
+}
+function ik(pose, qPrev) {
+  return { q: qPrev ? qPrev.slice() : [0, 0, 0, 0, -90, 0], cfg: "N U T" };
+}
+// @@logic-end
+// ================================================================ scene
+const viewport = $("viewport");
+const renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: "high-performance", preserveDrawingBuffer: true });
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.NeutralToneMapping;
+renderer.toneMappingExposure = 1.0;
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFShadowMap;
+renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 2));
+renderer.domElement.classList.add("main");
+viewport.prepend(renderer.domElement);
+
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(34, 1, 0.02, 30);
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.maxPolarAngle = Math.PI * 0.495;
+controls.minDistance = 0.35;
+controls.maxDistance = 7;
+
+// Lights live in scene space (y up). world is rotated -90° about x, as before.
+const hemi = new THREE.HemisphereLight(0xffffff, 0x8a837e, 0.2);
+scene.add(hemi);
+const sun = new THREE.DirectionalLight(0xfff4e8, 2.4);
+sun.position.set(2.0, 3.4, 1.8);
+sun.target.position.set(0, 0.3, 0);
+sun.castShadow = true;
+sun.shadow.mapSize.set(4096, 4096);
+sun.shadow.radius = 4;
+sun.shadow.bias = -0.0002;
+sun.shadow.normalBias = 0.002;
+Object.assign(sun.shadow.camera, { left: -1.7, right: 1.7, top: 1.7, bottom: -1.7, near: 0.5, far: 9 });
+sun.shadow.camera.updateProjectionMatrix();
+scene.add(sun, sun.target);
+const fillL = new THREE.DirectionalLight(0xdde6ff, 0.45);
+fillL.position.set(-2.2, 1.6, -1.6);
+scene.add(fillL);
+const rimL = new THREE.DirectionalLight(0xffffff, 0.6);
+rimL.position.set(-0.6, 2.4, 2.8);
+scene.add(rimL);
+
+const world = new THREE.Group();
+world.rotation.x = -Math.PI / 2;
+scene.add(world);
+
+// Room environment (no external HDR). PMREM runs before renderer.render is wrapped.
+const pmrem = new THREE.PMREMGenerator(renderer);
+const room = new RoomEnvironment();
+scene.environment = pmrem.fromScene(room, 0.04).texture;
+pmrem.dispose();
+const roomGeos = new Set(), roomMats = new Set();
+room.traverse((o) => {
+  if (o.geometry) roomGeos.add(o.geometry);
+  const list = o.material ? (Array.isArray(o.material) ? o.material : [o.material]) : [];
+  list.forEach((m) => roomMats.add(m));
+});
+roomGeos.forEach((g) => g.dispose());
+roomMats.forEach((m) => m.dispose());
+
+function themeIsDark() {
+  const t = document.documentElement.dataset.theme;
+  if (t === "dark") return true;
+  if (t === "light") return false;
+  return matchMedia("(prefers-color-scheme: dark)").matches;
+}
+function syncSceneTheme() {
+  const bottom = css("--scene-bottom") || "#e4dfda";
+  if (!scene.fog) scene.fog = new THREE.Fog(new THREE.Color(bottom), 7, 18);
+  else scene.fog.color.set(bottom);
+  scene.environmentIntensity = themeIsDark() ? 0.5 : 0.7;
+}
+syncSceneTheme();
+window.addEventListener("themechange", syncSceneTheme);
+
+// Composer: MSAA on the target (samples 4). Logical size is corrected just below —
+// passing a pixel-sized target makes EffectComposer treat that size as CSS pixels.
+function viewSize() {
+  return { w: Math.max(1, viewport.clientWidth), h: Math.max(1, viewport.clientHeight) };
+}
+const view0 = viewSize();
+const dpr0 = Math.min(devicePixelRatio || 1, 2);
+renderer.setPixelRatio(dpr0);
+renderer.setSize(view0.w, view0.h, false);
+const composerTarget = new THREE.WebGLRenderTarget(Math.floor(view0.w * dpr0), Math.floor(view0.h * dpr0), {
+  type: THREE.HalfFloatType,
+  samples: 4,
+});
+const composer = new EffectComposer(renderer, composerTarget);
+composer.setSize(view0.w, view0.h);
+const gtao = new GTAOPass(scene, camera, view0.w, view0.h);
+gtao.updateGtaoMaterial({ radius: 0.15, distanceExponent: 1.5, thickness: 1.5, scale: 1.0, samples: 12 });
+gtao.blendIntensity = 0.85;
+composer.addPass(new RenderPass(scene, camera));
+composer.addPass(gtao);
+composer.addPass(new OutputPass());
+
+function fitComposer() {
+  const { w, h } = viewSize();
+  const dpr = renderer.getPixelRatio();
+  renderer.setSize(w, h, false);
+  composer.setPixelRatio(dpr);
+  composer.setSize(w, h);
+}
+new ResizeObserver(fitComposer).observe(viewport);
+
+function writeHqBox(on) {
+  const box = document.getElementById("hq");
+  if (box) box.checked = on;
+  document.querySelectorAll("label.toggle").forEach((lab) => {
+    if (lab.textContent.replace(/\s+/g, " ").trim() !== "HQ") return;
+    const input = lab.querySelector("input");
+    if (input) input.checked = on;
+  });
+}
+let hq = true;
+function shadowMapSize(px) {
+  sun.shadow.mapSize.set(px, px);
+  if (sun.shadow.map) {
+    sun.shadow.map.dispose();
+    sun.shadow.map = null;
+  }
+}
+function setQuality(on) {
+  hq = !!on;
+  try { localStorage.setItem("fanuc-edu-hq", hq ? "1" : "0"); } catch (e) {}
+  gtao.enabled = hq;
+  shadowMapSize(hq ? 4096 : 2048);
+  renderer.setPixelRatio(hq ? Math.min(devicePixelRatio || 1, 2) : 1);
+  fitComposer();
+  writeHqBox(hq);
+  return hq;
+}
+function storedHq() {
+  try {
+    const v = localStorage.getItem("fanuc-edu-hq");
+    if (v === "0" || v === "1") return v === "1";
+  } catch (e) {}
+  return null;
+}
+function autoHq() {
+  if (matchMedia("(pointer: coarse)").matches) return false;
+  if (viewport.clientWidth > 0 && viewport.clientWidth < 900) return false;
+  return true;
+}
+setQuality(storedHq() !== null ? storedHq() : autoHq());
+document.addEventListener("change", (e) => {
+  const t = e.target;
+  if (t && t.id === "hq") setQuality(t.checked);
+});
+
+// frame() calls renderFrame(). Passes inside the composer call renderer.render directly.
+let rendering = false;
+let profilesArmed = false;
+let watchT0 = 0, watchLast = 0, watchSum = 0, watchN = 0, watchDone = false;
+function noteFrameTime() {
+  if (watchDone) return;
+  const now = performance.now();
+  if (watchT0 === 0) { watchT0 = watchLast = now; return; }
+  watchSum += now - watchLast;
+  watchN += 1;
+  watchLast = now;
+  if (now - watchT0 < 3000) return;
+  watchDone = true;
+  const avg = watchN ? watchSum / watchN : 0;
+  const tripped = avg > 28 && hq;
+  if (tripped) setQuality(false);
+  window.__hqStats = { avgMs: avg, tripped };
+}
+function renderFrame() {
+  if (!profilesArmed) { profilesArmed = true; finalizeProfiles(); }
+  if (rendering) return;
+  rendering = true;
+  try { composer.render(); }
+  finally { rendering = false; }
+  noteFrameTime();
+}
+window.setQuality = setQuality;
+const mat = (color, roughness = 0.5, metalness = 0.1, extra = {}) => {
+  const physical = (extra.clearcoat > 0) || (extra.transmission > 0) || (extra.sheen > 0);
+  const Ctor = physical ? THREE.MeshPhysicalMaterial : THREE.MeshStandardMaterial;
+  return new Ctor({ color, roughness, metalness, ...extra });
+};
+const phys = (color, roughness, metalness, extra = {}) => new THREE.MeshPhysicalMaterial({ color, roughness, metalness, ...extra });
+
+// aluDark, steel and t3Dark are overwritten below with the hi-fi values. lens and glass stay in use.
+const M = {
+  aluDark: mat(0x9aa1a8, 0.4, 0.7),
+  steel: mat(0xd2d6db, 0.22, 0.85),
+  t3Dark: mat(0x3b4046, 0.5, 0.2),
+  lens: mat(0x111316, 0.2, 0.3),
+  boxBody: mat(0x3a1f14, 0.75, 0.05), gold: mat(0xd4a83a, 0.3, 0.85), cavity: mat(0x241209, 0.85, 0.0),
+  glass: new THREE.MeshPhysicalMaterial({ color: 0xd8e6ee, roughness: 0.05, transparent: true, opacity: 0.12, depthWrite: false }),
+};
+
+function mulberry32(seed) {
+  let a = seed >>> 0;
+  return () => {
+    a = (a + 0x6D2B79F5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+function procTex(w, h, seed, paint, { color = false, repeat = [1, 1] } = {}) {
+  const c = document.createElement("canvas");
+  c.width = w; c.height = h;
+  const g = c.getContext("2d");
+  const img = g.createImageData(w, h);
+  paint(img.data, w, h, mulberry32(seed));
+  g.putImageData(img, 0, 0);
+  const tex = new THREE.CanvasTexture(c);
+  tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+  tex.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy());
+  if (color) tex.colorSpace = THREE.SRGBColorSpace;
+  tex.repeat.set(repeat[0], repeat[1]);
+  return tex;
+}
+function put(data, i, r, g, b, a = 255) {
+  data[i] = r; data[i + 1] = g; data[i + 2] = b; data[i + 3] = a;
+}
+
+// Roughness maps stay near white so they multiply material.roughness instead of replacing it.
+const brushRough = procTex(512, 512, 7, (data, w, h, rnd) => {
+  for (let y = 0; y < h; y++) {
+    const line = 225 + Math.floor(rnd() * 30);
+    for (let x = 0; x < w; x++) {
+      const v = Math.max(0, Math.min(255, line + Math.floor((rnd() - 0.5) * 28)));
+      put(data, (y * w + x) * 4, v, v, v);
+    }
+  }
+}, { repeat: [4, 4] });
+
+const carbonMap = procTex(256, 256, 11, (data, w, h) => {
+  const cell = 4;
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    const u = Math.floor(x / cell), v = Math.floor(y / cell);
+    const twill = ((Math.floor(u / 2) + Math.floor(v / 2)) & 1) === 0;
+    const along = (twill ? x : y) % cell;
+    const thread = along < cell * 0.72;
+    const shade = (thread ? 255 : 205) - ((x * 3 + y) % 12);
+    put(data, (y * w + x) * 4, shade, shade, shade);
+  }
+}, { color: true, repeat: [8, 8] });
+const carbonBump = procTex(256, 256, 12, (data, w, h) => {
+  const cell = 4;
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    const u = Math.floor(x / cell), v = Math.floor(y / cell);
+    const twill = ((Math.floor(u / 2) + Math.floor(v / 2)) & 1) === 0;
+    const along = (twill ? x : y) % cell;
+    const thread = along < cell * 0.72;
+    const edge = along === 0 || along === Math.floor(cell * 0.72);
+    const shade = edge ? 40 : thread ? 230 : 90;
+    put(data, (y * w + x) * 4, shade, shade, shade);
+  }
+}, { repeat: [8, 8] });
+
+const beltFabric = procTex(256, 256, 21, (data, w, h, rnd) => {
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    const warp = (x % 4) < 2;
+    const weft = (y % 4) < 2;
+    const base = warp === weft ? 236 : 214;
+    const v = Math.max(0, Math.min(255, base + Math.floor((rnd() - 0.5) * 12)));
+    put(data, (y * w + x) * 4, v, v, v - 1);
+  }
+}, { color: true, repeat: [6, 2] });
+
+const epoxyMap = procTex(256, 256, 31, (data, w, h, rnd) => {
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    const n = rnd();
+    const speck = n > 0.92 ? 40 : n < 0.04 ? -30 : Math.floor((rnd() - 0.5) * 16);
+    const v = Math.max(0, Math.min(255, 232 + speck));
+    put(data, (y * w + x) * 4, v, v, v);
+  }
+}, { color: true, repeat: [8, 8] });
+
+const tapeMap = procTex(128, 128, 41, (data, w, h) => {
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    const stripe = (Math.floor((x + y) / 16) & 1) === 0;
+    if (stripe) put(data, (y * w + x) * 4, 240, 196, 0);
+    else put(data, (y * w + x) * 4, 18, 18, 18);
+  }
+}, { color: true, repeat: [2, 2] });
+
+// TubeGeometry: u runs along the path, so rings are vertical stripes.
+const ductRings = procTex(128, 32, 51, (data, w, h) => {
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    const rib = (x % 10) < 2;
+    const v = rib ? 245 : 110;
+    put(data, (y * w + x) * 4, v, v, v);
+  }
+}, { repeat: [8, 1] });
+
+const cardboardMap = procTex(256, 256, 61, (data, w, h, rnd) => {
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    const fiber = Math.sin((x * 0.35 + y * 0.05) + rnd() * 0.4);
+    const fleck = rnd() > 0.97 ? -50 : 0;
+    const v = Math.max(0, Math.min(255, 226 + fiber * 14 + fleck));
+    put(data, (y * w + x) * 4, v, Math.max(0, v - 8), Math.max(0, v - 18));
+  }
+}, { color: true, repeat: [2, 2] });
+
+const brushed = { roughnessMap: brushRough };
+const carbon = { map: carbonMap, bumpMap: carbonBump, bumpScale: 0.35 };
+const stainlessBrushed = phys(0xc8c6c2, 0.30, 1, brushed);
+const deck = phys(0xc8c6c2, 0.30, 1, { roughnessMap: brushRough });
+
+function floorIsDark() {
+  const t = document.documentElement.dataset.theme;
+  if (t === "dark") return true;
+  if (t === "light") return false;
+  return matchMedia("(prefers-color-scheme: dark)").matches;
+}
+
+Object.assign(M, {
+  aluClear: phys(0xc9ccd0, 0.40, 1),
+  aluBlasted: phys(0xbfc3c7, 0.55, 1),
+  aluDark: phys(0x1c1d1f, 0.45, 0.4),
+  stainlessBrushed,
+  steel: phys(0xd2d6db, 0.18, 1),
+  chrome: phys(0xeceef0, 0.08, 1),
+  zinc9006: phys(0xa5a8a6, 0.5, 0.8),
+  galv: phys(0xb4b8bb, 0.45, 0.9),
+  blackPlastic: phys(0x151515, 0.65, 0),
+  blackRubber: phys(0x151515, 0.85, 0),
+  whitePOM: phys(0xf2f1ec, 0.5, 0),
+  siliconeBlue: phys(0x2f7fd0, 0.6, 0),
+  puBlue: phys(0x2a6fd6, 0.45, 0, { transmission: 0 }),
+  pcClear: phys(0xffffff, 0.05, 0, {
+    transparent: true, opacity: 0.12, depthWrite: false, side: THREE.DoubleSide,
+    clearcoat: 1, clearcoatRoughness: 0.08, envMapIntensity: 1.2,
+  }),
+  sealBlack: phys(0x111111, 0.8, 0),
+  t3White: phys(0xeef0ef, 0.42, 0, { clearcoat: 0.3, clearcoatRoughness: 0.35 }),
+  t3Grey: phys(0xc4c8cc, 0.45, 0),
+  t3Dark: phys(0x2e3236, 0.55, 0.1),
+  duct: phys(0x3a3d42, 0.6, 0.05, { bumpMap: ductRings, bumpScale: 0.45 }),
+  carbonGloss: phys(0x16181b, 0.35, 0.15, { ...carbon, clearcoat: 0.8, clearcoatRoughness: 0.18 }),
+  carbonMatte: phys(0x16181b, 0.55, 0.1, carbon),
+  motorBlack: phys(0x18191b, 0.5, 0.25),
+  gearboxSilver: phys(0xb8bcc0, 0.35, 0.9),
+  hoodSteel: stainlessBrushed,
+  deck,
+  beltPU: phys(0xf4f4f2, 0.8, 0, { map: beltFabric }),
+  tunnelWhite: phys(0xe9ecef, 0.35, 0.2),
+  coldBlue: phys(0x9fd3f5, 0.4, 0, { emissive: 0x2b6c99, emissiveIntensity: 0.6 }),
+  floor: phys(floorIsDark() ? 0x2a2b2c : 0xb9bcbd, 0.55, 0, { map: epoxyMap }),
+  tape: phys(0xffffff, 0.6, 0, { map: tapeMap }),
+  cabinet: phys(0xc8c6c2, 0.32, 1, { roughnessMap: brushRough }),
+  nestPOM: phys(0xf2f1ec, 0.45, 0),
+  lampRed: phys(0x5a1010, 0.4, 0, { emissive: 0xff2a2a, emissiveIntensity: 0 }),
+  lampAmber: phys(0x5a3a08, 0.4, 0, { emissive: 0xffb020, emissiveIntensity: 0 }),
+  lampGreen: phys(0x0d4a1a, 0.4, 0, { emissive: 0x3dff6a, emissiveIntensity: 0 }),
+  estopRed: phys(0xc0201a, 0.4, 0),
+  estopYellow: phys(0xf2c400, 0.5, 0),
+  screen: phys(0x0b0d10, 0.3, 0, { emissive: 0xffffff, emissiveIntensity: 0 }),
+  boxBody: phys(0x3a1f14, 0.75, 0.05, { map: cardboardMap }),
+  gold: phys(0xd4a83a, 0.3, 0.85),
+  cavity: phys(0x241209, 0.85, 0),
+});
+
+const FLAVOUR_MAT = {
+  dark: phys(0x2e170f, 0.30, 0.05, { clearcoat: 0.5, clearcoatRoughness: 0.25 }),
+  milk: phys(0x6e3f24, 0.35, 0.04, { clearcoat: 0.4, clearcoatRoughness: 0.28 }),
+  ruby: phys(0xa83a55, 0.35, 0.04, { clearcoat: 0.4, clearcoatRoughness: 0.28 }),
+};
+const BLOOM_MAT = {
+  dark: phys(0x8f8279, 0.9, 0),
+  milk: phys(0xa99282, 0.9, 0),
+  ruby: phys(0xcfa3ad, 0.9, 0),
+};
+
+function applyFloorTheme() {
+  M.floor.color.set(floorIsDark() ? 0x2a2b2c : 0xb9bcbd);
+}
+window.addEventListener("themechange", applyFloorTheme);
+function mesh(geo, m, parent = world) { const o = new THREE.Mesh(geo, m); o.castShadow = o.receiveShadow = true; parent.add(o); return o; }
+function box(w, d, h, m, x, y, z, parent) { const o = mesh(new THREE.BoxGeometry(w, d, h), m, parent); o.position.set(x, y, z); return o; }
+function vcyl(r, h, m, x, y, z, seg = 32, parent) { const o = mesh(new THREE.CylinderGeometry(r, r, h, seg), m, parent); o.rotation.x = Math.PI / 2; o.position.set(x, y, z); return o; }
+const UP = V(0, 1, 0);
+function rod(r, m, seg = 12) { return mesh(new THREE.CylinderGeometry(r, r, 1, seg), m); }
+function placeRod(o, a, b) { const d = b.clone().sub(a); o.position.copy(a).addScaledVector(d, 0.5); o.scale.set(1, d.length(), 1); o.quaternion.setFromUnitVectors(UP, d.normalize()); }
+function stadium(len, r, depth, m, parent) {
+  const s = new THREE.Shape();
+  s.absarc(0, 0, r, Math.PI / 2, Math.PI * 1.5, false); s.absarc(len, 0, r, -Math.PI / 2, Math.PI / 2, false);
+  const g = new THREE.ExtrudeGeometry(s, { depth, bevelEnabled: true, bevelThickness: 0.004, bevelSize: 0.004, bevelSegments: 2, curveSegments: 24 });
+  return mesh(g, m, parent);
+}
+function stripeTexture(base, stripe, repeat) {
+  const c = document.createElement("canvas"); c.width = 256; c.height = 16;
+  const g = c.getContext("2d"); g.fillStyle = base; g.fillRect(0, 0, 256, 16); g.fillStyle = stripe; for (let i = 0; i < 256; i += 16) g.fillRect(i, 0, 5, 16);
+  const tex = new THREE.CanvasTexture(c); tex.wrapS = tex.wrapT = THREE.RepeatWrapping; tex.repeat.set(repeat, 1); tex.colorSpace = THREE.SRGBColorSpace;
+  return tex;
+}
+
+// ---------------------------------------------------------------- helpers of the hi-fi build (contract: plan §4.2; signatures are fixed)
+// Rounded box: use it for every visible solid (radius 1.5-5 mm), plain box() only for hidden or tiny parts.
+function rbox(w, d, h, r, m, x, y, z, parent) {
+  const rr = Math.max(1e-5, Math.min(r, Math.min(w, d, h) / 2 - 1e-5));
+  const o = mesh(new RoundedBoxGeometry(w, d, h, 4, rr), m, parent); o.position.set(x, y, z); return o;
+}
+const toShape = (pts) => (pts instanceof THREE.Shape ? pts : new THREE.Shape(pts.map((p) => new THREE.Vector2(p.x !== undefined ? p.x : p[0], p.y !== undefined ? p.y : p[1]))));
+// Move each outline point toward the centroid by `dist` so a later bevelSize brings the outside back to the requested size.
+function shrinkOutline(pts, dist) {
+  const list = pts instanceof THREE.Shape ? pts.getPoints(48) : pts;
+  const xy = list.map((p) => [p.x !== undefined ? p.x : p[0], p.y !== undefined ? p.y : p[1]]);
+  let cx = 0, cy = 0;
+  for (const [x, y] of xy) { cx += x; cy += y; }
+  cx /= xy.length; cy /= xy.length;
+  return xy.map(([x, y]) => {
+    const dx = cx - x, dy = cy - y, len = Math.hypot(dx, dy) || 1;
+    const t = Math.min(dist, len * 0.85);
+    return [x + (dx / len) * t, y + (dy / len) * t];
+  });
+}
+// Extrusion of a closed outline. bevel 0 keeps the T0 path: depth is the full span, no extra translate.
+// bevel > 0 shrinks the outline, rounds it back out, and keeps the span exact (bevel adds thickness on both ends).
+function extrudeShapeGeo(pts, depthTotal, bevel) {
+  const b = Math.max(0, Math.min(bevel || 0, depthTotal / 2 - 1e-4));
+  const geo = new THREE.ExtrudeGeometry(toShape(b > 0 ? shrinkOutline(pts, b) : pts), {
+    depth: depthTotal - 2 * b, bevelEnabled: b > 0, bevelThickness: b, bevelSize: b, bevelOffset: 0, bevelSegments: 3, curveSegments: 24,
+  });
+  if (b > 0) geo.translate(0, 0, b);
+  return geo;
+}
+// Plan outline [[x, y], ...] (or a THREE.Shape) extruded from z0 to z1.
+function extrudeXY(pts, z0, z1, m, parent, bevel = 0) { const geo = extrudeShapeGeo(pts, z1 - z0, bevel); geo.translate(0, 0, z0); return mesh(geo, m, parent); }
+// Side profile [[x, z], ...] extruded along y from y0 to y1 (rotateX(+90°) maps depth w to -y, then shift by y1; no mirroring).
+function extrudeXZ(pts, y0, y1, m, parent, bevel = 0) { const geo = extrudeShapeGeo(pts, y1 - y0, bevel); geo.rotateX(Math.PI / 2); geo.translate(0, y1, 0); return mesh(geo, m, parent); }
+// Profile [[r, z], ...] (bottom to top) revolved about the local z axis.
+function lathe(prof, m, parent, seg = 48) {
+  const geo = new THREE.LatheGeometry(prof.map(([r, z]) => new THREE.Vector2(r, z)), seg); geo.rotateX(Math.PI / 2); return mesh(geo, m, parent);
+}
+// Tube through points (Vector3 or [x, y, z]); updateTube() rebuilds it in place (dispose + new geometry).
+function tubeGeo(pts, r, tub, rad) {
+  const curve = new THREE.CatmullRomCurve3(pts.map((p) => (p.isVector3 ? p : V(p[0], p[1], p[2]))), false, "centripetal");
+  return new THREE.TubeGeometry(curve, tub, r, rad, false);
+}
+function tubeAlong(pts, r, m, parent, tub = 64, rad = 12) { const o = mesh(tubeGeo(pts, r, tub, rad), m, parent); o.userData.tube = { r, tub, rad }; return o; }
+function updateTube(o, pts) { const { r, tub, rad } = o.userData.tube; o.geometry.dispose(); o.geometry = tubeGeo(pts, r, tub, rad); }
+
+// 40x40 slot-8 section, metres. One unit-length extrusion, instanced with scale z = length.
+function profile4040Shape() {
+  const s = 0.001, r = 4;
+  const face = [[20, -4], [15.5, -4], [15.5, -8], [9.75, -8], [7.75, -6], [7.75, 6], [9.75, 8], [15.5, 8], [15.5, 4], [20, 4]];
+  const shape = new THREE.Shape();
+  for (let k = 0; k < 4; k++) {
+    const a = k * Math.PI / 2, c = Math.cos(a), si = Math.sin(a);
+    const R = ([x, y]) => [(x * c - y * si) * s, (x * si + y * c) * s];
+    const [cx, cy] = R([16, -16]);
+    if (k === 0) shape.moveTo(...R([16, -20]));
+    shape.absarc(cx, cy, r * s, a - Math.PI / 2, a, false);
+    for (const p of face) shape.lineTo(...R(p));
+    shape.lineTo(...R([20, 16]));
+  }
+  shape.closePath();
+  const hole = (x, y, rad) => { const p = new THREE.Path(); p.absarc(x * s, y * s, rad * s, 0, Math.PI * 2, true); return p; };
+  shape.holes.push(hole(0, 0, 3.4), hole(14, 14, 3), hole(-14, 14, 3), hole(-14, -14, 3), hole(14, -14, 3));
+  return shape;
+}
+const PROFILE_CAP = 800;
+const BOLT_CAP = 1500;
+const profileGeo = new THREE.ExtrudeGeometry(profile4040Shape(), { depth: 1, bevelEnabled: false, curveSegments: 3 });
+// ISO 7380 M8 button head: Ø14 mm × 4.4 mm, dome and a small chamfer, revolved about Y.
+const boltGeo = new THREE.LatheGeometry([
+  new THREE.Vector2(0, 0.0022), new THREE.Vector2(0.0048, 0.0022), new THREE.Vector2(0.0064, 0.0015),
+  new THREE.Vector2(0.007, 0.0006), new THREE.Vector2(0.007, -0.0015), new THREE.Vector2(0.0062, -0.0022), new THREE.Vector2(0, -0.0022),
+], 20);
+function makeInstanced(geo, material, cap, parent) {
+  const o = new THREE.InstancedMesh(geo, material, cap);
+  o.count = 0;
+  o.castShadow = o.receiveShadow = true;
+  o.frustumCulled = false;
+  o.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+  parent.add(o);
+  return o;
+}
+const profiles = makeInstanced(profileGeo, M.aluClear, PROFILE_CAP, world);
+const bolts = makeInstanced(boltGeo, M.steel, BOLT_CAP, world);
+const extraProfiles = new Map();
+const extraBolts = new Map();
+function pooledMesh(map, parent, geo, material, cap) {
+  let o = map.get(parent);
+  if (!o) { o = makeInstanced(geo, material, cap, parent); map.set(parent, o); }
+  return o;
+}
+const _beamQ = new THREE.Quaternion();
+const _beamS = new THREE.Vector3();
+const _beamM = new THREE.Matrix4();
+const _beamD = new THREE.Vector3();
+const _zAxis = V(0, 0, 1);
+const _boltP = new THREE.Vector3();
+const _boltN = new THREE.Vector3();
+let profileWarned = false, boltWarned = false;
+// 40x40 slot-8 beam from a to b, in the parent's local frame. Ends are bare; cap them at the call site.
+// One InstancedMesh per parent so a later rigid move (a robot root) carries its beams.
+function profileBeam(a, b, parent = world) {
+  const pool = parent === world ? profiles : pooledMesh(extraProfiles, parent, profileGeo, M.aluClear, PROFILE_CAP);
+  _beamD.subVectors(b, a);
+  const L = _beamD.length();
+  if (L < 1e-6) return pool;
+  if (pool.count >= PROFILE_CAP) { if (!profileWarned) { profileWarned = true; console.warn("profileBeam: capacity", PROFILE_CAP); } return pool; }
+  _beamD.multiplyScalar(1 / L);
+  _beamQ.setFromUnitVectors(_zAxis, _beamD);
+  _beamS.set(1, 1, L);
+  _beamM.compose(a, _beamQ, _beamS);
+  pool.setMatrixAt(pool.count, _beamM);
+  pool.count += 1;
+  return pool;
+}
+let profilesFinal = false;
+function finalizeProfiles() {
+  if (profilesFinal) return;
+  profilesFinal = true;
+  profiles.instanceMatrix.needsUpdate = true;
+  bolts.instanceMatrix.needsUpdate = true;
+  extraProfiles.forEach((o) => { o.instanceMatrix.needsUpdate = true; });
+  extraBolts.forEach((o) => { o.instanceMatrix.needsUpdate = true; });
+}
+// ISO 7380 M8 button head seated on the face. `normal` points out of the face. The head centre sits 2.2 mm out.
+function addBolt(pos, normal, parent = world) {
+  const pool = parent === world ? bolts : pooledMesh(extraBolts, parent, boltGeo, M.steel, BOLT_CAP);
+  if (pool.count >= BOLT_CAP) { if (!boltWarned) { boltWarned = true; console.warn("addBolt: capacity", BOLT_CAP); } return pool; }
+  _boltN.copy(normal);
+  if (_boltN.lengthSq() < 1e-12) _boltN.copy(_zAxis); else _boltN.normalize();
+  _beamQ.setFromUnitVectors(UP, _boltN);
+  _boltP.copy(pos).addScaledVector(_boltN, 0.0022);
+  _beamS.set(1, 1, 1);
+  _beamM.compose(_boltP, _beamQ, _beamS);
+  pool.setMatrixAt(pool.count, _beamM);
+  pool.count += 1;
+  return pool;
+}
+// Sticker / tag: a plane facing +z with centred text. Not added to the scene; the caller places and rotates it.
+function labelPlane(text, w, h, opts = {}) {
+  const { bg = "#ffffff", fg = "#111111", font = "600 140px 'IBM Plex Sans', sans-serif", px = 256 } = opts;
+  const c = document.createElement("canvas"); c.height = px; c.width = Math.max(px, Math.round(px * w / h));
+  const g = c.getContext("2d");
+  g.fillStyle = bg; g.fillRect(0, 0, c.width, c.height);
+  g.globalAlpha = 0.07;
+  for (let i = 0; i < 500; i++) {
+    const v = Math.floor(Math.random() * 90);
+    g.fillStyle = `rgb(${v},${v},${v})`;
+    g.fillRect(Math.random() * c.width, Math.random() * c.height, 2, 1);
+  }
+  g.globalAlpha = 1;
+  g.fillStyle = fg; g.font = font; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText(text, c.width / 2, c.height / 2);
+  const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 4;
+  const o = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshStandardMaterial({ map: tex, roughness: 0.75 }));
+  o.receiveShadow = true;
+  return o;
+}
+// Cell dimensions. Values marked [E] are estimated from photos (PLAN §3). Do not change them silently.
+const LAYOUT = {
+  floor: -0.85,                                   // [E] worktop 0.85 m above the floor
+  frame: { x: 1.10, y: 0.75, top: 1.00, prof: 0.040 },  // [E] outer 1100 x 750; roof rails at z = 1.00
+  shelf: { z: -0.55 },                            // lower shelf (aluminium slats) [E]
+  castor: { d: 0.075, h: 0.10 }, foot: { d: 0.050 },
+  worktop: { t: 0.015, slot: 0.040 },             // slotted aluminium plate, T-slots every 40 mm along x
+  door: { side: "front", x: [-0.53, 0.53] },      // single hinged door, hinges on the left front post
+  robot: { x: 0.20, y: 0.12, yawDeg: 90 },        // WORLD +X along scene +y
+  board: { x: -0.10, y: -0.08, yawDeg: 0 },       // Solitaire board centre
+  camera: { x: -0.10, y: -0.08, lensZ: 0.876 },   // 856 mm standoff + board top 0.020
+  grid: { x: 0.33, y: -0.22 },                    // 200x200 calibration plate, front-right
+  controller: { x: -0.30, y: 0.0 },               // open-air R-30iB Mate Plus, lower shelf, left
+  eurobox: { x: 0.28, y: 0.0 },                   // grey Euro box with the iPendant, lower shelf, right
+};
+// T0 stub. G1 replaces this file with the frame, door, worktop, shelf and castors.
+const floorMat = mat(0x8a8e92, 0.92, 0.02);
+const floor = mesh(new THREE.PlaneGeometry(8, 8), floorMat);
+floor.position.z = LAYOUT.floor;
+floor.receiveShadow = true;
+const guardPanels = [];
+Object.defineProperty(guardPanels, "visible", {
+  get() { return guardPanels.length === 0 || guardPanels.every((o) => o.visible); },
+  set(v) { for (const o of guardPanels) o.visible = v; },
+});
+// T0 stub. G1 replaces this file with the open-air controller, Euro box and iPendant.
+// T0 stub. G1 replaces this file with the SC130EF2 camera, LED ring and calibration grid.
+const ledRingMat = null;
+function setLed(on) { if (ledRingMat) ledRingMat.emissiveIntensity = on ? 2.2 : 0; }
+// T0 stub. G1 replaces this file with the Solitaire board and the ten cylinders.
+let partMeshes = [];
+function buildPartMeshes() {}
+function placeParts() {}
+// T0 stub. C2 replaces this file with the LR Mate 200iD/4S.
+// Mount: group at LAYOUT.robot, yaw +90° so local +x (WORLD +X) points along scene +y.
+// scene cell = (robot.x - Y, robot.y + X, 0.330 + Z) with WORLD metres, origin at J2 height.
+const robotRoot = new THREE.Group();
+robotRoot.position.set(LAYOUT.robot.x, LAYOUT.robot.y, 0);
+robotRoot.rotation.z = LAYOUT.robot.yawDeg * Math.PI / 180;
+world.add(robotRoot);
+function buildRobot() {}
+function setRobot() {}
+function robotCheck() { return 0; }
+window.pcHooks = Object.assign(window.pcHooks || {}, { robotCheck });
+// Camera views. three.js scene is y-up; the cell group `world` is rotated -90° about x,
+// so a cell point (x, y, z) is the scene point (x, z, -y).
+function cellToScene(x, y, z) { return V(x, z, -y); }
+
+const views = {
+  iso: { pos: cellToScene(1.35, -1.55, 1.05), target: cellToScene(0.0, 0.0, 0.35) },
+  front: { pos: cellToScene(0.0, -1.85, 0.55), target: cellToScene(0.0, 0.0, 0.40) },
+  side: { pos: cellToScene(-1.85, 0.05, 0.55), target: cellToScene(0.0, 0.0, 0.40) },
+  top: { pos: cellToScene(0.0, -0.02, 2.35), target: cellToScene(0.0, 0.0, 0.0) },
+  robot: { pos: cellToScene(0.85, -0.55, 0.72), target: cellToScene(0.20, 0.12, 0.40) },
+  board: { pos: cellToScene(-0.55, -0.72, 0.55), target: cellToScene(-0.10, -0.08, 0.04) },
+  camera: { pos: cellToScene(LAYOUT.camera.x, LAYOUT.camera.y, LAYOUT.camera.lensZ), target: cellToScene(LAYOUT.camera.x, LAYOUT.camera.y + 0.001, 0.02), fov: 19.2 },
+};
+window.pcViews = views;
+
+let flight = null;
+const homeFov = 34;
+function setView(name) {
+  const v = views[name]; if (!v) return;
+  camera.fov = v.fov || homeFov;
+  camera.updateProjectionMatrix();
+  flight = { t: 0, fromP: camera.position.clone(), fromT: controls.target.clone(), toP: v.pos.clone(), toT: v.target.clone() };
+  document.querySelectorAll(".views button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.view === name)));
+}
+camera.position.copy(views.iso.pos);
+controls.target.copy(views.iso.target);
+document.querySelectorAll(".views button").forEach((b) => b.addEventListener("click", () => setView(b.dataset.view)));
+controls.addEventListener("start", () => {
+  flight = null;
+  document.querySelectorAll(".views button").forEach((b) => b.setAttribute("aria-pressed", "false"));
+});
+
+function applyTheme() {
+  const top = new THREE.Color(css("--scene-top") || "#f4f5f6");
+  const bottom = new THREE.Color(css("--scene-bottom") || "#d5d8dc");
+  const c = document.createElement("canvas"); c.width = 2; c.height = 256;
+  const g = c.getContext("2d");
+  const gr = g.createLinearGradient(0, 0, 0, 256);
+  gr.addColorStop(0, "#" + top.getHexString());
+  gr.addColorStop(1, "#" + bottom.getHexString());
+  g.fillStyle = gr; g.fillRect(0, 0, 2, 256);
+  const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace;
+  scene.background = tex;
+  floorMat.color.copy(bottom).lerp(top, 0.35);
+  scene.environmentIntensity = themeIsDark() ? 0.55 : 0.75;
+  drawLanes();
+}
+function resize() {
+  const w = viewport.clientWidth, h = viewport.clientHeight;
+  camera.aspect = w / Math.max(1, h);
+  camera.updateProjectionMatrix();
+  drawLanes();
+}
+new ResizeObserver(resize).observe(viewport);
+// T0 shell. G2 fills the cards. The transport and the view buttons already work.
+let mode = "program";
+const LANES = [
+  ["robot", "--lane-robot"],
+  ["gripper", "--lane-grip"],
+  ["vision", "--lane-vision"],
+  ["io", "--lane-io"],
+];
+
+function setMode(m) {
+  mode = m;
+  document.querySelectorAll(".mode-switch button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.mode === m)));
+  if (m === "manual") setPlaying(false);
+}
+document.querySelectorAll(".mode-switch button").forEach((b) => b.addEventListener("click", () => setMode(b.dataset.mode)));
+
+const drawer = $("drawer");
+function syncPanels() {
+  const open = document.querySelector(".rail-item[aria-pressed='true']");
+  if (drawer) drawer.hidden = !open;
+}
+document.querySelectorAll(".rail-item").forEach((b) => b.addEventListener("click", () => {
+  const was = b.getAttribute("aria-pressed") === "true";
+  document.querySelectorAll(".rail-item").forEach((x) => x.setAttribute("aria-pressed", "false"));
+  document.querySelectorAll(".card[data-panel]").forEach((c) => { c.hidden = true; });
+  if (!was) {
+    b.setAttribute("aria-pressed", "true");
+    const card = document.querySelector(`.card[data-panel="${b.dataset.panel}"]`);
+    if (card) card.hidden = false;
+  }
+  syncPanels();
+}));
+
+const guardsBox = $("guards");
+if (guardsBox) guardsBox.addEventListener("change", (e) => { guardPanels.visible = e.target.checked; });
+
+const laneCanvas = $("lanes");
+function drawLanes() {
+  if (!laneCanvas) return;
+  const w = laneCanvas.clientWidth, h = laneCanvas.clientHeight;
+  if (w < 2 || h < 2) return;
+  const dpr = Math.min(devicePixelRatio || 1, 2);
+  laneCanvas.width = Math.floor(w * dpr);
+  laneCanvas.height = Math.floor(h * dpr);
+  const g = laneCanvas.getContext("2d");
+  g.setTransform(dpr, 0, 0, dpr, 0, 0);
+  g.clearRect(0, 0, w, h);
+  const rowH = h / LANES.length;
+  LANES.forEach(([name, varName], i) => {
+    const y = i * rowH + 2;
+    const hh = rowH - 4;
+    const col = css(varName) || "#888";
+    for (const s of segs[name] || []) {
+      const x0 = (s.t0 / DURATION) * w;
+      const x1 = (s.t1 / DURATION) * w;
+      g.fillStyle = col;
+      g.globalAlpha = 0.85;
+      g.fillRect(x0, y, Math.max(1, x1 - x0), hh);
+    }
+  });
+  g.globalAlpha = 1;
+}
+
+function renderGantt() {}
+// Playback. frame() calls renderFrame(). THREE.Timer drives the loop.
+let time = 0, playing = true, speed = 1;
+const playIcon = $("play-icon");
+function setPlaying(p) {
+  playing = p;
+  if (playIcon) playIcon.innerHTML = p ? '<path d="M7 4.5h3.5v15H7zM13.5 4.5H17v15h-3.5z"/>' : '<path d="M7 4.5v15l13-7.5z"/>';
+  const btn = $("play");
+  if (btn) btn.setAttribute("aria-label", p ? "Pause" : "Play");
+}
+function seek(t) { time = Math.min(DURATION, Math.max(0, t)); }
+const playBtn = $("play");
+if (playBtn) playBtn.addEventListener("click", () => {
+  if (mode !== "program") setMode("program");
+  if (!playing && time >= DURATION - 1e-6) time = 0;
+  setPlaying(!playing);
+});
+document.querySelectorAll(".chips button").forEach((b) => b.addEventListener("click", () => {
+  speed = Number(b.dataset.speed);
+  document.querySelectorAll(".chips button").forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
+}));
+const loopBox = $("loop");
+const tl = $("timeline");
+let scrubbing = false;
+function scrubTo(e) {
+  const r = tl.getBoundingClientRect();
+  seek(((e.clientX - r.left) / r.width) * DURATION);
+}
+if (tl) {
+  tl.addEventListener("pointerdown", (e) => { scrubbing = true; tl.setPointerCapture(e.pointerId); scrubTo(e); });
+  tl.addEventListener("pointermove", (e) => { if (scrubbing) scrubTo(e); });
+  tl.addEventListener("pointerup", () => { scrubbing = false; });
+}
+function ease(u) { return u < 0.5 ? 2 * u * u : 1 - ((-2 * u + 2) ** 2) / 2; }
+
+function update(dt) {
+  if (mode === "program" && playing) {
+    time += dt * speed;
+    if (time >= DURATION) {
+      if (loopBox && loopBox.checked) time %= DURATION;
+      else { time = DURATION; setPlaying(false); }
+    }
+  }
+  const pose = robotPose(time);
+  setRobot(pose.q, pose.grip);
+  placeParts(time);
+  const head = $("playhead");
+  if (head) head.style.left = (100 * time / DURATION) + "%";
+  const now = $("clock-now");
+  const end = $("clock-end");
+  if (now) now.textContent = time.toFixed(1);
+  if (end) end.textContent = DURATION.toFixed(1);
+}
+
+const timer = new THREE.Timer();
+timer.connect(document);
+function frame() {
+  timer.update();
+  const dt = Math.min(timer.getDelta(), 0.1);
+  if (flight) {
+    flight.t = Math.min(1, flight.t + dt / 0.7);
+    const e = ease(flight.t);
+    camera.position.lerpVectors(flight.fromP, flight.toP, e);
+    controls.target.lerpVectors(flight.fromT, flight.toT, e);
+    if (flight.t >= 1) flight = null;
+  }
+  update(dt);
+  controls.update();
+  renderFrame();
+  requestAnimationFrame(frame);
+}
+window.addEventListener("themechange", applyTheme);
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change", applyTheme);
+syncPanels();
+resize();
+applyTheme();
+setPlaying(true);
+window.pc = {
+  get segs() { return segs; },
+  get parts() { return parts; },
+  get DURATION() { return DURATION; },
+  get minClear() { return minClear; },
+  get S() { return S; },
+  get HOLES() { return HOLES; },
+  seek, pause: () => setPlaying(false), play: () => setPlaying(true), setView,
+  setCamera(pos, target) {
+    flight = null;
+    camera.position.set(pos[0], pos[1], pos[2]);
+    controls.target.set(target[0], target[1], target[2]);
+    controls.update();
+  },
+  ...(window.pcHooks || {}),
+};
+window.pcReady = true;
+requestAnimationFrame(frame);
+</script>
+</body></html>
