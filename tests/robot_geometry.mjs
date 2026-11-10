@@ -10,7 +10,7 @@ import { runInNewContext } from 'node:vm';
 const root=resolve(dirname(fileURLToPath(import.meta.url)),'..');
 const args=process.argv.slice(2);
 if(args.some(a=>a!=='--perturb')){console.error('Usage: node tests/robot_geometry.mjs [--perturb]');process.exit(2);}
-const perturb=args.includes('--perturb'),files={urdf:'_ref/robot_src/rosi_lrmate200id4s_macro.xacro',glb:'assets/lrmate200id4s.glb',html:'index.html'};
+const perturb=args.includes('--perturb'),files={urdf:'assets/lrmate200id4s.urdf.xacro',glb:'assets/lrmate200id4s.glb',html:'index.html'};
 const sha=b=>createHash('sha256').update(b).digest('hex');
 let failures=0;
 function check(ok,message){console.log(`${ok?'PASS':'FAIL'} ${message}`);if(!ok)failures++;}
