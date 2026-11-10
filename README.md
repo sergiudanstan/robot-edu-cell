@@ -8,4 +8,9 @@ The arm geometry follows FANUC public datasheets for the LR Mate 200iD/4S: 4 kg 
 
 The cycle lasts 24.0 s. The smallest capsule clearance is 28.3 mm, between the forearm and the rear panel at 0.9 s.
 
-Open `index.html` in a browser, or use the GitHub Pages link. Edit the files in `src/` and run `node tools/build.mjs`. Logic checks are `node tests/run.mjs`.
+Open `index.html` in a browser, or use the GitHub Pages link. Edit the files in `src/` and run `node tools/build.mjs`.
+
+## Checks
+
+- `node tests/run.mjs` checks the cycle logic.
+- `node tests/robot_geometry.mjs` checks the LR Mate link frames, the 330 / 260 / 20 / 290 / 70 mm spans, and the URDF chain against `fk`. It reads `_ref/robot_src/rosi_lrmate200id4s_macro.xacro`, which stays outside the repository.
