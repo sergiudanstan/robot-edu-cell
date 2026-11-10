@@ -1,6 +1,6 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>FANUC Educational Cell</title>
-<meta name="description" content="FANUC Educational Cell: an LR Mate 200iD/4S moves ten nylon cylinders across a Solitaire board inside a silver training cell, with the TP program, I/O and iRVision in the browser.">
+<title>Robot Educational Cell · LR Mate 200iD/4S</title>
+<meta name="description" content="An LR Mate 200iD/4S moves ten nylon cylinders across a Solitaire board inside a silver training cell. The page shows the program, the I/O lamps, the joint state and the ceiling camera.">
 <link rel="icon" href="data:,">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -51,7 +51,7 @@
     flex: none; display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
     padding: 8px 16px; border-bottom: 1px solid var(--line); background: var(--panel);
   }
-  .mark { flex: none; width: 40px; height: 40px; border-radius: 8px; background: var(--mark); display: grid; place-items: center; color: #1a1c1e; font: 700 13px var(--display); letter-spacing: 0.02em; }
+  .mark svg { width: 28px; height: 28px; display: block; }
   .title { min-width: 0; line-height: 1.1; }
   .title small { display: block; font: 600 11px var(--ui); letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
   .title h1 { margin: 0; font: 700 22px var(--display); letter-spacing: 0.01em; }
@@ -114,10 +114,21 @@
 </head>
 <body>
 <header>
-  <div class="mark" aria-hidden="true">F</div>
+  <div class="mark" aria-hidden="true">
+    <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="4" y="24" width="10" height="4" rx="1"/>
+      <circle cx="9" cy="22" r="2"/>
+      <path d="M9 20V12"/>
+      <circle cx="9" cy="11" r="2"/>
+      <path d="M11 11l9-3"/>
+      <circle cx="21" cy="7.6" r="2"/>
+      <path d="M23 8.2 L27 11"/>
+      <path d="M26 10.4v3.2M28.2 11.4v3.2"/>
+    </svg>
+  </div>
   <div class="title">
-    <small>Educational cell</small>
-    <h1>FANUC Educational Cell · LR Mate 200iD/4S</h1>
+    <small>Independent teaching model</small>
+    <h1>Robot Educational Cell · LR Mate 200iD/4S</h1>
   </div>
   <div class="mode-switch" role="group" aria-label="Mode">
     <button type="button" data-mode="program" aria-pressed="true">Program</button>
@@ -161,7 +172,7 @@
     </section>
     <section class="card" data-panel="tcp" hidden>
       <h2>TCP</h2>
-      <p class="note">UF0 is the FANUC world frame, millimetres. UF1 is the board’s front-left corner.</p>
+      <p class="note">UF0 is the robot world frame, millimetres. UF1 is the board’s front-left corner.</p>
       <div id="tcp"></div>
     </section>
     <section class="card" data-panel="report" hidden>

@@ -10,7 +10,7 @@ import { fileURLToPath } from "node:url";
 const { chromium } = await import("/opt/homebrew/lib/node_modules/playwright/index.mjs");
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
-const outDir = join(homedir(), "Downloads/fanuc_edu_cell/shots");
+const outDir = join(homedir(), "Downloads/robot_edu_cell/shots");
 const quick = process.argv.includes("--quick");
 const views = ["iso", "front", "side", "top", "robot", "board", "camera"];
 const fracs = [0.15, 0.45, 0.75];

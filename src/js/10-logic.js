@@ -330,5 +330,5 @@ for(const t of sampleTimes) {
 }
 const peakV=ROBOT.vmax.map(()=>0);
 for(let i=1;i<S.t.length;i++){const dt=S.t[i]-S.t[i-1];if(dt<1e-9)continue;S.q[i].forEach((v,j)=>{peakV[j]=Math.max(peakV[j],Math.abs(v-S.q[i-1][j])/dt);});}
-console.log('[fanuc] cycle',DURATION.toFixed(3),'s; clearance',(minClear.m*1000).toFixed(2),'mm;',minClear.obstacle,'/',minClear.link);
+console.log('[cell] cycle',DURATION.toFixed(3),'s; clearance',(minClear.m*1000).toFixed(2),'mm;',minClear.obstacle,'/',minClear.link);
 // @@logic-end

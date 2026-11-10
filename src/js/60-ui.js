@@ -193,7 +193,7 @@ $("csv").addEventListener("click", () => {
   const blob = new Blob([[head, ...rows].join("\n")], { type: "text/csv" });
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
-  a.download = "fanuc_edu_cell_cycle.csv";
+  a.download = "robot_edu_cell_cycle.csv";
   a.click();
   URL.revokeObjectURL(a.href);
 });

@@ -1,6 +1,6 @@
 // One cycle film of the educational cell.
 // Usage: node tools/record.mjs
-// Writes ~/Downloads/fanuc_edu_cell/fanuc_edu_cell.mp4 (h264, yuv420p, 1920x1080).
+// Writes ~/Downloads/robot_edu_cell/robot_edu_cell.mp4 (h264, yuv420p, 1920x1080).
 import { spawn } from "node:child_process";
 import { mkdirSync, rmSync } from "node:fs";
 import { homedir } from "node:os";
@@ -10,8 +10,8 @@ import { fileURLToPath } from "node:url";
 const { chromium } = await import("/opt/homebrew/lib/node_modules/playwright/index.mjs");
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
-const outDir = join(homedir(), "Downloads/fanuc_edu_cell");
-const outFile = join(outDir, "fanuc_edu_cell.mp4");
+const outDir = join(homedir(), "Downloads/robot_edu_cell");
+const outFile = join(outDir, "robot_edu_cell.mp4");
 const frames = "/tmp/fec_frames";
 
 mkdirSync(outDir, { recursive: true });

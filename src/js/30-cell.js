@@ -131,13 +131,7 @@ tubeAlong([
   V(-hx - 0.07, 0.12, 0.08), V(-hx - 0.012, 0.12, 0.02),
 ], 0.012, M.blackRubber, world, 28, 10);
 
-// Yellow FANUC plate on the front-left roof beam.
+// Yellow plate on the front-left roof beam. Blank: no wordmark.
 const badge = rbox(0.150, 0.006, 0.042, 0.002, M.fanucYellow, -0.30, yFront - P / 2 - 0.004, F.top);
-const badgeText = labelPlane("FANUC", 0.132, 0.032, {
-  bg: "#F5C221", fg: "#1a1c1e", font: "700 108px 'Barlow Semi Condensed', sans-serif", px: 180,
-});
-badgeText.rotation.x = Math.PI / 2;
-badgeText.position.set(-0.30, yFront - P / 2 - 0.008, F.top);
-world.add(badgeText);
 void badge;
 void sw;

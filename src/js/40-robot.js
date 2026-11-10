@@ -47,8 +47,6 @@ function robotLabels(links) {
   plate.position.set(0,-0.0790,0.060);plate.rotation.x=Math.PI/2-draft;links[0].add(plate);
   const warning=labelPlane('CAUTION',0.045,0.025,{bg:'#edc12b',fg:'#171717'});
   warning.position.set(0,-0.0775,0.108);warning.rotation.x=Math.PI/2-draft;links[0].add(warning);
-  const brand=labelPlane('FANUC',0.080,0.020,{bg:'#f5c221',fg:'#a41d25'});
-  brand.rotation.set(Math.PI/2,0,Math.PI/2);brand.position.set(-0.003,-0.0955,0.150);links[2].add(brand);
   const name=labelPlane('LR Mate 200iD/4S',0.145,0.015,{bg:'#f5c221',fg:'#332b19'});
   name.rotation.x=Math.PI/2;name.position.set(0.190,-0.0465,0);links[4].add(name);
 }

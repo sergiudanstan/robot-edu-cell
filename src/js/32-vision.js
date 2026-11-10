@@ -40,7 +40,7 @@ gridCanvas.width = 512; gridCanvas.height = 512;
   }
   g.fillStyle = "#222";
   g.font = "600 22px sans-serif";
-  g.fillText("FANUC iRVision", 16, 26);
+  g.fillText("CALIBRATION", 16, 26);
   g.font = "500 15px sans-serif";
   g.fillText("(15mm CENTER TO CENTER)", 168, 500);
 }
