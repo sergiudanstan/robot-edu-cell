@@ -7,7 +7,9 @@ const views = {
   front: { pos: cellToScene(0.0, -2.15, 0.20), target: cellToScene(0.0, 0.0, 0.12) },
   side: { pos: cellToScene(-2.15, 0.02, 0.22), target: cellToScene(0.0, 0.0, 0.12) },
   top: { pos: cellToScene(0.0, -0.02, 2.35), target: cellToScene(0.0, 0.0, 0.0) },
-  robot: { pos: cellToScene(0.85, -0.55, 0.72), target: cellToScene(0.20, 0.12, 0.40) },
+  // Inside the cell (inner x ±0.51, y −0.34…0.52, roof 0.96). The front door
+  // glass is behind the camera, and the frame takes in the whole arm.
+  robot: { pos: cellToScene(-0.38, -0.32, 0.86), target: cellToScene(0.14, 0.10, 0.18), fov: 84 },
   board: { pos: cellToScene(-0.55, -0.72, 0.55), target: cellToScene(-0.10, -0.08, 0.04) },
   camera: { pos: cellToScene(LAYOUT.camera.x, LAYOUT.camera.y, LAYOUT.camera.lensZ), target: cellToScene(LAYOUT.camera.x, LAYOUT.camera.y + 0.001, 0.02), fov: 19.2 },
 };

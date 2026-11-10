@@ -1,35 +1,29 @@
-// LR Mate 200iD/4S, procedural. Kinematic dimensions: PLAN §6 / robot_spec.md (metres).
-// Casting contours, cover depths, connector placement and fasteners are [E] photo estimates.
-// No external dress pack: only the short electric-gripper lead is visible.
+// LR Mate 200iD/4S from CAD-derived meshes: ROS-Industrial fanuc_lrmate200id_support, meshes/lrmate200id4s/visual
+// (BSD-3-Clause, see assets/LICENSE-ros-industrial.txt), packed as assets/lrmate200id4s.glb: one node per URDF link,
+// metres, each node in its own link frame. The chain below copies urdf/lrmate200id4s_macro.xacro.
+// Gripper and labels are this project's own [E] models.
+const ROBOT_GLB = 'assets/lrmate200id4s.glb';
+const URDF_JOINTS = [   // origin xyz in the parent link frame (m), rotation axis
+  { xyz: [0, 0, 0.330], axis: [0, 0, 1] },    // joint_1  base_link -> link_1
+  { xyz: [0, 0, 0], axis: [0, 1, 0] },        // joint_2  link_1 -> link_2
+  { xyz: [0, 0, 0.260], axis: [0, -1, 0] },   // joint_3  link_2 -> link_3
+  { xyz: [0, 0, 0.020], axis: [-1, 0, 0] },   // joint_4  link_3 -> link_4
+  { xyz: [0.290, 0, 0], axis: [0, -1, 0] },   // joint_5  link_4 -> link_5
+  { xyz: [0.070, 0, 0], axis: [-1, 0, 0] },   // joint_6  link_5 -> link_6
+];
+const ROBOT_LINK_MATERIAL = { base_link: 'fanucBlack', link_1: 'fanucYellow', link_2: 'fanucYellow', link_3: 'fanucYellow',
+  link_4: 'fanucYellow', link_5: 'fanucYellow', link_6: 'fanucBlack' };
+// FANUC J1..J6 in degrees, J3 measured from horizontal -> URDF joint angles in radians. URDF joint_3 = J2 + J3.
+const urdfAngles = (q) => [q[0], q[1], q[1] + q[2], q[3], q[4], q[5]].map((v) => v * D2R);
 function robotTurned(r, z0, z1, material, parent, segments = 40) {
   const b = Math.min(0.0006, (z1 - z0) / 4, r / 4);
   return lathe([[0, z0], [r-b, z0], [r, z0+b], [r, z1-b], [r-b, z1], [0, z1]], material, parent, segments);
-}
-function robotSideDisk(r, y0, y1, x, z, material, parent) {
-  const o = robotTurned(r, 0, y1-y0, material, parent);
-  o.rotation.x = -Math.PI/2; o.position.set(x,y0,z); return o;
 }
 function robotScrew(x,y,z,normal,parent) {
   const o=robotTurned(0.0035,0,0.0028,M.steel,parent,16);
   o.position.set(x,y,z);o.quaternion.setFromUnitVectors(V(0,0,1),normal);
   const socket=robotTurned(0.0015,0.0028,0.0029,M.fanucBlack,parent,6);
   socket.position.copy(o.position);socket.quaternion.copy(o.quaternion);
-}
-function robotCover(x,z,r,y,sg,parent) {
-  robotSideDisk(r,y-0.0015,y+0.0015,x,z,M.fanucBlack,parent);
-  robotSideDisk(r-0.003,Math.min(y,y+sg*0.007),Math.max(y,y+sg*0.007),x,z,M.fanucYellow,parent);
-  for(let i=0;i<6;i++){const a=i*Math.PI/3;robotScrew(x+(r-0.009)*Math.cos(a),y+sg*0.007,z+(r-0.009)*Math.sin(a),V(0,sg,0),parent);}
-}
-// Convex outline of circular cast ends, in x/z; bevels keep the long link from looking box-like.
-function robotLinkOutline(length,r0,r1) {
-  const points=[];
-  for(const [z,r] of [[0,r0],[length,r1]])for(let i=0;i<48;i++){const a=i*Math.PI/24;points.push([r*Math.cos(a),z+r*Math.sin(a)]);}
-  points.sort((a,b)=>a[0]-b[0]||a[1]-b[1]);
-  const cross=(o,a,b)=>(a[0]-o[0])*(b[1]-o[1])-(a[1]-o[1])*(b[0]-o[0]);
-  const lo=[],hi=[];
-  for(const p of points){while(lo.length>1&&cross(lo.at(-2),lo.at(-1),p)<=0)lo.pop();lo.push(p);}
-  for(const p of points.slice().reverse()){while(hi.length>1&&cross(hi.at(-2),hi.at(-1),p)<=0)hi.pop();hi.push(p);}
-  return lo.slice(0,-1).concat(hi.slice(0,-1));
 }
 // Merge only direct meshes of one rigid link; joints, gripper fingers and their transforms survive.
 function mergeRobotLink(group) {
@@ -46,66 +40,20 @@ function mergeRobotLink(group) {
   }
   for(const [material,geos] of batches){const g=BufferGeometryUtils.mergeGeometries(geos,false);if(!g)throw Error('Robot link merge failed');geos.forEach(g=>g.dispose());mesh(g,material,group);}
 }
-function buildRobot() {
-  const root=new THREE.Group();root.name='LR Mate 200iD/4S';root.position.set(LAYOUT.robot.x,LAYOUT.robot.y,0);root.rotation.z=LAYOUT.robot.yawDeg*D2R;world.add(root);
-  const joint=(name,parent,x=0,y=0,z=0)=>{const g=new THREE.Group();g.name=name;g.position.set(x,y,z);parent.add(g);return g;};
-  // Fixed 160 mm base, mounting face z=0; black controller/connector casting height 169 mm.
-  rbox(0.160,0.160,0.014,0.004,M.fanucBlack,0,0,0.007,root);
-  extrudeXZ([[-0.075,0.014],[0.075,0.014],[0.078,0.140],[0.063,0.169],[-0.063,0.169],[-0.078,0.140]],-0.074,0.074,M.fanucBlack,root,0.006);
-  for(const x of [-0.064,0.064])for(const y of [-0.064,0.064])robotScrew(x,y,0.014,V(0,0,1),root);
-  rbox(0.008,0.105,0.108,0.003,M.fanucBlack,-0.080,0,0.081,root);
-  for(const [y,z,r] of [[-0.030,0.060,0.011],[0,0.060,0.008],[0.030,0.060,0.006],[-0.024,0.105,0.005],[0.022,0.105,0.005]]) {
-    const socket=robotTurned(r,0,0.008,M.steel,root);socket.rotation.y=-Math.PI/2;socket.position.set(-0.084,y,z);
-    const insert=robotTurned(r*0.65,0,0.001,M.fanucBlack,root);insert.rotation.y=-Math.PI/2;insert.position.set(-0.092,y,z);
-  }
+// Labels sit 0.5 mm proud of flat mesh faces found by ray casts on the GLB (base side has a 1.8° draft).
+function robotLabels(links) {
+  const draft=Math.atan(0.032);
   const plate=labelPlane('LR Mate 200iD/4S',0.065,0.020,{bg:'#a7aaa8',fg:'#202222'});
-  plate.position.set(0,-0.0741,0.060);plate.rotation.x=Math.PI/2;root.add(plate);
+  plate.position.set(0,-0.0790,0.060);plate.rotation.x=Math.PI/2-draft;links[0].add(plate);
   const warning=labelPlane('CAUTION',0.045,0.025,{bg:'#edc12b',fg:'#171717'});
-  warning.position.set(0,-0.0742,0.108);warning.rotation.x=Math.PI/2;root.add(warning);
-  const j1=joint('J1',root);
-  robotTurned(0.080,0.169,0.177,M.fanucBlack,j1);
-  // Asymmetric turret plan envelope: forward R106, rear R122; narrowed near the shoulder.
-  extrudeXZ([[-0.075,0.177],[0.075,0.177],[0.106,0.210],[0.078,0.265],[0.063,0.330],[0.040,0.376],[-0.040,0.376],[-0.063,0.330],[-0.075,0.270],[-0.122,0.225]],-0.062,0.062,M.fanucYellow,j1,0.008);
-  // Shoulder axis and motor cover envelope span 190 mm, casting rear radius 63 mm.
-  robotSideDisk(0.063,-0.086,0.086,0,ROBOT.zJ2,M.fanucYellow,j1);
-  robotCover(0,ROBOT.zJ2,0.057,-0.088,-1,j1);robotCover(0,ROBOT.zJ2,0.057,0.088,1,j1);
-  const j2=joint('J2',j1,0,0,ROBOT.zJ2);
-  const a2=KIN.a2/1000,a3=KIN.a3/1000,d4=KIN.d4/1000,d6=KIN.d6/1000;
-  extrudeXZ(robotLinkOutline(a2,0.049,0.060),-0.042,0.042,M.fanucYellow,j2,0.006);
-  // Slightly proud side cover follows the long cast link. [E] seam and bolt spacing.
-  extrudeXZ(robotLinkOutline(a2-0.030,0.037,0.046).map(([x,z])=>[x,z+0.015]),-0.044,-0.042,M.fanucBlack,j2,0.0005);
-  extrudeXZ(robotLinkOutline(a2-0.030,0.035,0.044).map(([x,z])=>[x,z+0.015]),-0.047,-0.044,M.fanucYellow,j2,0.001);
-  for(const z of [0.020,0.080,0.180,0.245])for(const sg of [-1,1])robotScrew(sg*0.033,-0.047,z,V(0,-1,0),j2);
+  warning.position.set(0,-0.0775,0.108);warning.rotation.x=Math.PI/2-draft;links[0].add(warning);
   const brand=labelPlane('FANUC',0.080,0.020,{bg:'#f5c221',fg:'#a41d25'});
-  brand.rotation.set(Math.PI/2,0,Math.PI/2);brand.position.set(0,-0.0472,0.130);j2.add(brand);
-  const j3=joint('J3',j2,0,0,a2);
-  robotSideDisk(0.075,-0.046,0.046,0,0,M.fanucYellow,j3);
-  robotCover(0,0,0.058,0.047,1,j3);robotCover(0,0,0.058,-0.047,-1,j3);
-  // J4 is on the forearm axis, offset 20 mm above the elbow. Forearm rotates about +x.
-  const j4=joint('J4',j3,0,0,a3);
-  const bearing=robotTurned(0.050,-0.005,0.020,M.fanucBlack,j4);bearing.rotation.y=Math.PI/2;
-  // Tapered yellow forearm, 290 mm centre-to-centre; 100 mm at its broad end, 74 mm wrist.
-  extrudeXZ([[0.010,-0.040],[0.060,-0.047],[0.190,-0.037],[0.255,-0.030],[0.278,-0.020],
-    [0.278,0.020],[0.255,0.030],[0.190,0.037],[0.060,0.047],[0.010,0.040]],-0.047,0.047,M.fanucYellow,j4,0.005);
-  // Flattened removable side panels with seams and small steel socket screws.
-  extrudeXZ([[0.035,-0.031],[0.225,-0.025],[0.260,0],[0.225,0.025],[0.035,0.031]],-0.047,-0.045,M.fanucBlack,j4,0.0005);
-  extrudeXZ([[0.038,-0.029],[0.223,-0.023],[0.255,0],[0.223,0.023],[0.038,0.029]],-0.049,-0.047,M.fanucYellow,j4,0.0005);
-  for(const x of [0.045,0.135,0.225])for(const z of [-0.021,0.021])robotScrew(x,-0.049,z,V(0,-1,0),j4);
+  brand.rotation.set(Math.PI/2,0,Math.PI/2);brand.position.set(-0.003,-0.0955,0.150);links[2].add(brand);
   const name=labelPlane('LR Mate 200iD/4S',0.145,0.015,{bg:'#f5c221',fg:'#332b19'});
-  name.rotation.x=Math.PI/2;name.position.set(0.140,-0.0492,0.003);j4.add(name);
-  const j5=joint('J5',j4,d4,0,0);
-  robotSideDisk(0.037,-0.032,0.032,0,0,M.fanucYellow,j5);
-  robotSideDisk(0.025,-0.037,-0.032,0,0,M.fanucBlack,j5);
-  robotSideDisk(0.025,0.032,0.037,0,0,M.fanucYellow,j5);
-  const wrist=robotTurned(0.028,0.008,d6-0.006,M.fanucYellow,j5);wrist.rotation.y=Math.PI/2;
-  // FANUC flange frame R_TOOL maps local +z onto the preceding frame's +x.
-  // Its fixed alignment is followed by the single J6 rotation about flange-local z.
-  const j6=joint('J6 flange',j5,d6,0,0);
-  const flangeBasis=new THREE.Quaternion().setFromEuler(new THREE.Euler(Math.PI,-Math.PI/2,0,'YXZ'));
-  robotTurned(0.020,-0.006,0,M.fanucFlange,j6);
-  // ISO 9409-1-31.5-4-M5 face pattern. [E] visible recessed holes, rather than invented bolt heads.
-  for(let i=0;i<4;i++){const a=i*Math.PI/2;const hole=robotTurned(0.0025,0,0.00015,M.fanucBlack,j6,16);hole.position.set(0.01575*Math.cos(a),0.01575*Math.sin(a),0);}
-  const gripper=joint('electric gripper',j6);
+  name.rotation.x=Math.PI/2;name.position.set(0.190,-0.0465,0);links[4].add(name);
+}
+function buildRobotGripper(tool0) {
+  const gripper=new THREE.Group();gripper.name='electric gripper';tool0.add(gripper);
   rbox(0.060,0.045,0.075,0.003,M.gripperBody,0,0,0.0375,gripper);
   rbox(0.050,0.046,0.006,0.0015,M.gripperFinger,0,0,0.072,gripper);
   rbox(0.048,0.0015,0.040,0.0005,M.fanucBlack,0,-0.0228,0.036,gripper);
@@ -116,22 +64,53 @@ function buildRobot() {
   coil.push(V(0.016,-0.016,-0.008));tubeAlong(coil,0.0012,M.blackRubber,gripper,96,8);
   mergeRobotLink(gripper);
   const fingers=[-1,1].map(sg=>{const f=rbox(0.012,0.010,0.050,0.0015,M.gripperFinger,sg*0.018,0,0.100,gripper);f.userData.sg=sg;return f;});
-  const tcp=joint('UT1 TCP',gripper,0,0,UT1.z);
-  for(const link of [root,j1,j2,j3,j4,j5,j6])mergeRobotLink(link);
-  return {root,j1,j2,j3,j4,j5,j6,flange:j6,flangeBasis,gripper,fingers,tcp,q:[...HOME],grip:0};
+  const tcp=new THREE.Group();tcp.name='UT1 TCP';tcp.position.z=UT1.z;gripper.add(tcp);
+  return {gripper,fingers,tcp};
+}
+async function loadRobotMeshes(links) {
+  try {
+    const { GLTFLoader } = await import('three/addons/loaders/GLTFLoader.js');
+    const gltf = await new GLTFLoader().loadAsync(ROBOT_GLB);
+    links.forEach((link) => {
+      const node = gltf.scene.getObjectByName(link.name);
+      if (!node?.isMesh) throw Error(`node ${link.name} missing in ${ROBOT_GLB}`);
+      // STL-derived geometry has no normals: split at 35° creases so cast edges stay sharp and bores stay round.
+      const geo = BufferGeometryUtils.toCreasedNormals(node.geometry, 35 * D2R);
+      mesh(geo, M[ROBOT_LINK_MATERIAL[link.name]], link).name = link.name + ' mesh';
+    });
+    return true;
+  } catch (err) {
+    console.warn(`LR Mate 200iD/4S: CAD meshes not loaded from ${ROBOT_GLB} (${err.message}). Showing a stick model; serve the folder over http.`);
+    links.slice(1).forEach((link, i) => {   // stick fallback along the URDF joint offsets
+      const next = URDF_JOINTS[i + 2]?.xyz ?? [0.012, 0, 0], len = Math.hypot(...next);
+      const o = rod(0.025, M.fanucYellow); link.add(o); placeRod(o, V(0, 0, 0), V(...next).setLength(Math.max(len, 0.04)));
+    });
+    return false;
+  }
+}
+function buildRobot() {
+  const root=new THREE.Group();root.name='LR Mate 200iD/4S';root.position.set(LAYOUT.robot.x,LAYOUT.robot.y,0);root.rotation.z=LAYOUT.robot.yawDeg*D2R;world.add(root);
+  const base=new THREE.Group();base.name='base_link';root.add(base);   // mounting face on the worktop, z = 0
+  const links=[base];
+  URDF_JOINTS.forEach((j,i)=>{const g=new THREE.Group();g.name=`link_${i+1}`;g.position.set(...j.xyz);g.userData.axis=V(...j.axis);links[i].add(g);links.push(g);});
+  // ROS-I flange-tool0: rpy (pi, -pi/2, 0) = FANUC flange frame (tool +z along link_6 +x).
+  const tool0=new THREE.Group();tool0.name='tool0';tool0.rotation.copy(new THREE.Euler(Math.PI,-Math.PI/2,0,'ZYX'));links[6].add(tool0);
+  robotLabels(links);
+  const {gripper,fingers,tcp}=buildRobotGripper(tool0);
+  const ready=loadRobotMeshes(links);
+  return {root,links,tool0,flange:tool0,gripper,fingers,tcp,ready,q:[...HOME],grip:0};
 }
 const robotModel=buildRobot(),robotRoot=robotModel.root;
 function setRobot(q,grip=0) {
   if(!Array.isArray(q)||q.length!==6||!q.every(Number.isFinite)||!Number.isFinite(grip))throw Error('Invalid robot pose');
-  const m=robotModel,a=q.map(v=>v*D2R);
-  m.j1.rotation.z=a[0];m.j2.rotation.y=a[1];
-  // FANUC J3 is absolute from horizontal; the actual relative elbow is -(J2+J3).
-  m.j3.rotation.y=-(a[1]+a[2]);m.j4.rotation.x=-a[3];m.j5.rotation.y=-a[4];
-  m.j6.quaternion.copy(m.flangeBasis).multiply(new THREE.Quaternion().setFromAxisAngle(V(0,0,1),-a[5]));
+  const m=robotModel;
+  urdfAngles(q).forEach((a,i)=>{const link=m.links[i+1];link.quaternion.setFromAxisAngle(link.userData.axis,a);});
   const gap=0.024*(1-clamp(grip,0,1));
   m.fingers.forEach(f=>{f.position.x=f.userData.sg*(gap/2+0.006);});
   m.q=[...q];m.grip=clamp(grip,0,1);
 }
+// Max distance (mm) between tool0 of the URDF mesh chain and fk(q) from the logic, over random in-limit poses.
+// Points 100 mm along tool0 x and z are compared too, so the flange orientation is checked as well.
 function robotCheck(samples=null) {
   const m=robotModel,savedQ=[...m.q],savedGrip=m.grip;
   if(samples===null)samples=Array.from({length:50},()=>{
@@ -141,12 +120,55 @@ function robotCheck(samples=null) {
   let maxMM=0;
   try {
     for(const q of samples){setRobot(q,savedGrip);world.updateWorldMatrix(true,true);
-      const actual=world.worldToLocal(m.flange.getWorldPosition(V(0,0,0))),expected=worldToScene(fk(q).p);
-      const mm=actual.distanceTo(V(...expected))*1000;if(!Number.isFinite(mm))throw Error('Non-finite robot check');maxMM=Math.max(maxMM,mm);
+      const f=fk(q);
+      for(const [k,d] of [[-1,0],[0,0.1],[2,0.1]]){
+        const actual=world.worldToLocal(m.tool0.localToWorld(V(k===0?d:0,0,k===2?d:0)));
+        const expected=worldToScene(f.p.map((v,i)=>v+(k<0?0:1000*d*f.R[i][k])));
+        const mm=actual.distanceTo(V(...expected))*1000;if(!Number.isFinite(mm))throw Error('Non-finite robot check');maxMM=Math.max(maxMM,mm);
+      }
     }
   } finally {setRobot(savedQ,savedGrip);world.updateWorldMatrix(true,true);}
   return maxMM;
 }
+// Joint-origin distances (mm) at the URDF zero pose, read from the placed link frames.
+function robotMeasure() {
+  const m = robotModel, savedQ = [...m.q], savedGrip = m.grip;
+  setRobot([0, 0, 0, 0, 0, 0], savedGrip);
+  world.updateWorldMatrix(true, true);
+  const cell = (obj) => world.worldToLocal(obj.getWorldPosition(V(0, 0, 0)));
+  const pts = m.links.map(cell);
+  const mm = (a, b) => a.distanceTo(b) * 1000;
+  const meshes = m.links.map((link) => link.getObjectByName(link.name + ' mesh'));
+  const out = {
+    j2Height: mm(pts[0], pts[1]),
+    arm: mm(pts[2], pts[3]),
+    j3Offset: mm(pts[3], pts[4]),
+    forearm: mm(pts[4], pts[5]),
+    flange: mm(pts[5], pts[6]),
+    meshes: meshes.every(Boolean),
+    colors: Object.fromEntries(meshes.filter(Boolean).map((o) => [o.parent.name, '#' + o.material.color.getHexString()])),
+  };
+  setRobot(savedQ, savedGrip);
+  world.updateWorldMatrix(true, true);
+  return out;
+}
+// NDC extent of the CAD links plus the gripper on the current camera. Visible is −1…1.
+function robotFrame() {
+  world.updateWorldMatrix(true, true);
+  const box = new THREE.Box3();
+  let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+  const objects = [...robotModel.links.map((link) => link.getObjectByName(link.name + ' mesh')), robotModel.gripper];
+  for (const obj of objects) {
+    if (!obj) continue;
+    box.setFromObject(obj);
+    for (const x of [box.min.x, box.max.x]) for (const y of [box.min.y, box.max.y]) for (const z of [box.min.z, box.max.z]) {
+      const p = V(x, y, z).project(camera);
+      minX = Math.min(minX, p.x); maxX = Math.max(maxX, p.x);
+      minY = Math.min(minY, p.y); maxY = Math.max(maxY, p.y);
+    }
+  }
+  return { minX, maxX, minY, maxY };
+}
 setRobot(HOME,0);
-window.pcHooks=Object.assign(window.pcHooks||{},{robotCheck});
-queueMicrotask(()=>{if(window.pc)window.pc.robotCheck=robotCheck;});
+window.pcHooks=Object.assign(window.pcHooks||{},{robotCheck, robotMeasure, robotFrame});
+queueMicrotask(()=>{if(window.pc){window.pc.robotCheck=robotCheck;window.pc.robotMeasure=robotMeasure;window.pc.robotFrame=robotFrame;window.pc.robotReady=robotModel.ready;}});
