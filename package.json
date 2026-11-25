@@ -10,6 +10,6 @@
     "test": "node tests/run.mjs && node tests/smoke.mjs"
   },
   "devDependencies": {
-    "playwright-core": "1.65.0"
+    "playwright-core": "1.65.1"
   }
 }
