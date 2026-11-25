@@ -1,0 +1,15 @@
+{
+  "name": "robot-edu-cell",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Browser digital twin of a FANUC LR Mate 200iD/4S educational pick-and-place cell",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "build": "node tools/build.mjs",
+    "test": "node tests/run.mjs && node tests/smoke.mjs"
+  },
+  "devDependencies": {
+    "playwright-core": "1.65.0"
+  }
+}

@@ -1,5 +1,10 @@
 # Robot Educational Cell
 
+[![CI](https://github.com/sergiudanstan/robot-edu-cell/actions/workflows/ci.yml/badge.svg)](https://github.com/sergiudanstan/robot-edu-cell/actions/workflows/ci.yml)
+[![CodeQL](https://github.com/sergiudanstan/robot-edu-cell/actions/workflows/codeql.yml/badge.svg)](https://github.com/sergiudanstan/robot-edu-cell/actions/workflows/codeql.yml)
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/sergiudanstan/robot-edu-cell/badge)](https://scorecard.dev/viewer/?uri=github.com/sergiudanstan/robot-edu-cell)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
 An LR Mate 200iD/4S picks ten nylon cylinders from one Solitaire triangle and places them in the other. The page shows the program listing, the I/O lamps, the joint state and the view from the ceiling camera.
 
 Live page: https://sergiudanstan.github.io/robot-edu-cell/
@@ -24,3 +29,7 @@ Both checks must exit 0. Run `node tests/run.mjs --perturb`, `node tests/run.mjs
 ## Local paths
 
 Code: `~/code/robot-edu-cell`. Screenshots: `~/Downloads/robot_edu_cell/shots/`. The recording script writes `~/Downloads/robot_edu_cell/robot_edu_cell.mp4`. Captures and videos are local deliverables, excluded from Git; they must be regenerated after visual changes.
+
+## Development
+
+`index.html` is generated from `src/`; CI fails if the committed copy differs from a fresh `node tools/build.mjs`. `npm ci && npm test` runs the logic tests and the headless smoke test (needs Google Chrome). See [CONTRIBUTING.md](CONTRIBUTING.md) for branches and releases, [SECURITY.md](SECURITY.md) for reporting vulnerabilities, and [CHANGELOG.md](CHANGELOG.md) for history.
